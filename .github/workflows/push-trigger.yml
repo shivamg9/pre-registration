@@ -22,12 +22,6 @@ jobs:
     with:
       SERVICE_LOCATION: ./pre-registration
       BUILD_ARTIFACT: pre-registration
-    secrets:
-      OSSRH_USER: ${{ secrets.OSSRH_USER }}
-      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
-      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
   build-dockers:
     needs: build-maven-pre-registration
