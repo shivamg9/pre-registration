@@ -452,8 +452,6 @@ public class NotificationService {
 		}
 		return responseEntity;
 	}
-	public void setupBookingService() {
-           // Implementation here
-          }
+	
 
 }
