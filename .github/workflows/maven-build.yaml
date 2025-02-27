@@ -66,10 +66,7 @@ jobs:
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
 
-    - name: Build with Maven
-      run: cd ${{ inputs.SERVICE_LOCATION }} && mvn -U -B package -Dmaven.wagon.http.retryHandler.count=2 --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
-
-    - name: Ready the springboot executable artifacts
+       - name: Ready the springboot executable artifacts
       if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
       run: |
         ## FIND JARS & COPY ONLY EXECUTABLE JARs STORED UNDER TARGET DIRECTORY 
