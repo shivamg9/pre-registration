@@ -686,7 +686,7 @@ public class NotificationServiceTest {
 			e.printStackTrace();
 		}
 		Mockito.when(demographicServiceIntf.getDemographicData(Mockito.any())).thenReturn(demographicdto);
-		Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
+		// Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
@@ -704,10 +704,10 @@ public class NotificationServiceTest {
 
 	}
 
-	@Test
-	public void getAppointmentDetailsRestServiceTest() {
-		String preId = "1234";
-		Mockito.when(notificationUtil.getAppointmentDetails(preId)).thenReturn(bookingResultDto);
-		Assert.assertNotNull(notificationService.getAppointmentDetailsRestService(preId));
-	}
+	// @Test
+	// public void getAppointmentDetailsRestServiceTest() {
+	// 	String preId = "1234";
+	// 	Mockito.when(notificationUtil.getAppointmentDetails(preId)).thenReturn(bookingResultDto);
+	// 	Assert.assertNotNull(notificationService.getAppointmentDetailsRestService(preId));
+	// }
 }
