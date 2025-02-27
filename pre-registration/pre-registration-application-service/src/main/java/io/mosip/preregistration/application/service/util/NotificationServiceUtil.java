@@ -1,27 +1,48 @@
 package io.mosip.preregistration.application.service.util;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.mosip.kernel.core.exception.ExceptionUtils;
+import io.mosip.kernel.core.logger.spi.Logger;
+import io.mosip.kernel.core.templatemanager.spi.TemplateManager;
+import io.mosip.kernel.core.util.exception.JsonProcessingException;
+import io.mosip.preregistration.application.constant.PreRegLoginConstant;
+import io.mosip.preregistration.application.constant.PreRegLoginErrorConstants;
+import io.mosip.preregistration.application.dto.OtpRequestDTO;
+import io.mosip.preregistration.application.dto.PreRegMailRequestDto;
+import io.mosip.preregistration.application.dto.PreRegSmsRequestDto;
+import io.mosip.preregistration.application.dto.PreRegSmsResponseDto;
+import io.mosip.preregistration.application.entity.RegistrationCenterEntity;
+import io.mosip.preregistration.application.exception.PreRegLoginException;
+import io.mosip.preregistration.application.repository.ApplicationRepostiory;
+//import io.mosip.preregistration.application.repository.RegistrationCenterRepository;
+import io.mosip.preregistration.booking.dto.RegistrationCenterDto;
+import io.mosip.preregistration.booking.dto.RegistrationCenterResponseDto;
+import io.mosip.preregistration.core.common.dto.*;
+import io.mosip.preregistration.core.config.LoggerConfiguration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,153 +59,110 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.kernel.core.templatemanager.spi.TemplateManager;
-import io.mosip.kernel.core.util.JsonUtils;
-import io.mosip.kernel.core.util.exception.JsonMappingException;
-import io.mosip.kernel.core.util.exception.JsonParseException;
-import io.mosip.preregistration.application.constant.PreRegLoginConstant;
-import io.mosip.preregistration.application.constant.PreRegLoginErrorConstants;
-import io.mosip.preregistration.application.dto.OtpRequestDTO;
-import io.mosip.preregistration.application.dto.PreRegMailRequestDto;
-import io.mosip.preregistration.application.dto.PreRegSmsRequestDto;
-import io.mosip.preregistration.application.dto.PreRegSmsResponseDto;
-import io.mosip.preregistration.application.exception.PreRegLoginException;
-import io.mosip.preregistration.booking.dto.RegistrationCenterDto;
-import io.mosip.preregistration.booking.dto.RegistrationCenterResponseDto;
-import io.mosip.preregistration.core.common.dto.KeyValuePairDto;
-import io.mosip.preregistration.core.common.dto.MainRequestDTO;
-import io.mosip.preregistration.core.common.dto.NotificationDTO;
-import io.mosip.preregistration.core.common.dto.ResponseWrapper;
-import io.mosip.preregistration.core.common.dto.SMSRequestDTO;
-import io.mosip.preregistration.core.config.LoggerConfiguration;
-
-/**
- * The util class.
- * 
- * @author Sanober Noor
- * @since 1.0.0
- *
- */
 @Component
 public class NotificationServiceUtil {
 
+	private static final Logger log = LoggerConfiguration.logConfig(NotificationServiceUtil.class);
+
 	@Value("${mosip.utc-datetime-pattern}")
 	private String utcDateTimePattern;
-
-	private Logger log = LoggerConfiguration.logConfig(NotificationServiceUtil.class);
-
 	@Autowired
 	private Environment environment;
-
 	@Qualifier("selfTokenRestTemplate")
 	@Autowired
 	RestTemplate restTemplate;
-
 	@Autowired
 	TemplateManager templateManager;
-
-	/** The Constant LANG_CODE. */
-
-	private static final String LANG_CODE = "langcode";
-
-	private static final String IS_ACTIVE = "isActive";
-
-	/** The Constant TEMPLATE_TYPE_CODE. */
-
-	private static final String TEMPLATE_TYPE_CODE = "templatetypecode";
-
 	@Autowired
-	private ObjectMapper objectMapper;
-
+	private ObjectMapper objectMapper;  // Inject ObjectMapper
 	@Value("${registrationcenter.centerdetail.rest.uri}")
 	private String centerDetailUri;
 
-	/**
-	 * 
-	 * @param jsonString
-	 * @return
-	 * @throws JsonParseException
-	 * @throws JsonMappingException
-	 * @throws io.mosip.kernel.core.exception.IOException
-	 * @throws JSONException
-	 * @throws ParseException
-	 * @throws com.fasterxml.jackson.core.JsonParseException
-	 * @throws com.fasterxml.jackson.databind.JsonMappingException
-	 */
+	@Value("${regCenter.url}")
+	String regCenterUrl;
 
-	@SuppressWarnings("unchecked")
-	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String langauageCode,
-			boolean isLatest)
-			throws JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException, JSONException,
-			ParseException, com.fasterxml.jackson.core.JsonParseException,
-			com.fasterxml.jackson.databind.JsonMappingException, IOException {
-		log.info("sessionId", "idType", "id",
-				"In createUploadDto method of notification service util with body " + jsonString);
+//	@Autowired
+//	private RegistrationCenterRepository registrationCenterRepository;
+
+	private final String defaultLanguage; // Add this member variable
+
+//In the constructor
+
+	@Autowired
+	public NotificationServiceUtil(  // Existing parameters
+								   @Value("${preregistration.default-language:eng}") String defaultLanguage) {
+
+		this.defaultLanguage = defaultLanguage;
+	}
+
+
+
+	private static final String LANG_CODE = "langcode";
+	private static final String IS_ACTIVE = "isActive";
+	private static final String TEMPLATE_TYPE_CODE = "templatetypecode";
+	private ResponseWrapper<RegistrationCenterResponseDto> response;
+
+
+	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String languageCode, boolean isLatest)
+			throws IOException, DateTimeParseException {
+		log.info("In createNotificationDetails method with body: {}", jsonString);
+
 		MainRequestDTO<NotificationDTO> notificationReqDto = new MainRequestDTO<>();
-		JSONObject notificationData = new JSONObject(jsonString);
-		JSONObject notificationDtoData = (JSONObject) notificationData.get("request");
-		NotificationDTO notificationDto = null;
-		List<KeyValuePairDto<String, String>> langaueNamePairs = new ArrayList<KeyValuePairDto<String,String>>();
-		if (isLatest) {
-			HashMap<String, String> result = objectMapper.readValue(notificationDtoData.toString(), HashMap.class);
-			KeyValuePairDto langaueNamePair = null;
-			for (Map.Entry<String, String> set : result.entrySet()) {
-				langaueNamePair = new KeyValuePairDto();
-				notificationDto = objectMapper.convertValue(set.getValue(), NotificationDTO.class);
-				langaueNamePair.setKey(set.getKey());
-				langaueNamePair.setValue(notificationDto.getName());
-				langaueNamePairs.add(langaueNamePair);
-			}
-			if (notificationDto != null) {
-				notificationDto.setFullName(langaueNamePairs);
-				notificationDto.setLanguageCode(langauageCode);
-			}
-		}
-		if (!isLatest) {
-			notificationDto = (NotificationDTO) JsonUtils.jsonStringToJavaObject(NotificationDTO.class,
-					notificationDtoData.toString());
-			KeyValuePairDto langaueNamePair = new KeyValuePairDto();
-			langaueNamePair.setKey(langauageCode);
-			langaueNamePair.setValue(notificationDto.getName());
-			langaueNamePairs.add(langaueNamePair);
-			notificationDto.setFullName(langaueNamePairs);
-			notificationDto.setLanguageCode(langauageCode);
-		}
+		JsonNode notificationData = objectMapper.readTree(jsonString);
+		JsonNode notificationDtoData = notificationData.get("request");
 
-		notificationReqDto.setId(notificationData.get("id").toString());
-		notificationReqDto.setVersion(notificationData.get("version").toString());
-		if (!(notificationData.get("requesttime") == null
-				|| notificationData.get("requesttime").toString().isEmpty())) {
-			notificationReqDto.setRequesttime(
-					new SimpleDateFormat(utcDateTimePattern).parse(notificationData.get("requesttime").toString()));
+		NotificationDTO notificationDto = null;
+		List<KeyValuePairDto<String, String>> languageNamePairs = new ArrayList<>();
+
+		if (notificationData.has("requesttime") && !notificationData.get("requesttime").isNull()) {
+			try {
+				String requestTimeString = notificationData.get("requesttime").asText();
+				LocalDateTime requestTime = LocalDateTime.parse(requestTimeString, DateTimeFormatter.ofPattern(utcDateTimePattern));
+				notificationReqDto.setRequesttime(Date.from(requestTime.atZone(ZoneId.of("UTC")).toInstant()));
+			} catch (DateTimeParseException ex) {
+				log.error("Error parsing requesttime: {}", notificationData.get("requesttime").asText(), ex);
+				throw new io.mosip.preregistration.core.exception.InvalidRequestParameterException(io.mosip.preregistration.core.errorcodes.ErrorCodes.PRG_CORE_REQ_003.getCode(), io.mosip.preregistration.core.errorcodes.ErrorMessages.INVALID_REQUEST_DATETIME.getMessage(), null);
+			}
 		} else {
 			notificationReqDto.setRequesttime(null);
 		}
+
+		if (isLatest) {
+			// Handle latest logic (if needed, usually not for notifications).  Review if this is actually necessary.
+			//  It looks like an attempt to handle multiple languages, but it's overly complex.
+			HashMap<String, String> result = objectMapper.readValue(notificationDtoData.toString(), HashMap.class);
+			KeyValuePairDto<String, String> languageNamePair = null;
+			for (Map.Entry<String, String> set : result.entrySet()) {
+				languageNamePair = new KeyValuePairDto<>();
+				notificationDto = objectMapper.convertValue(set.getValue(), NotificationDTO.class);
+				languageNamePair.setKey(set.getKey());
+				languageNamePair.setValue(notificationDto.getName());
+				languageNamePairs.add(languageNamePair);
+			}
+			if (notificationDto != null) {
+				notificationDto.setFullName(languageNamePairs);
+				notificationDto.setLanguageCode(languageCode);
+			}
+
+		} else {
+			// Correctly parse the NotificationDTO using ObjectMapper
+			notificationDto = objectMapper.readValue(notificationDtoData.toString(), NotificationDTO.class);
+			notificationDto.setLanguageCode(languageCode); //Simplified the logic here
+		}
+
+
+		notificationReqDto.setId(notificationData.get("id").asText());
+		notificationReqDto.setVersion(notificationData.get("version").asText());
 		notificationReqDto.setRequest(notificationDto);
 		return notificationReqDto;
 	}
 
-	/**
-	 * Sms notification.
-	 *
-	 * @param values               the values
-	 * @param sender               the sender
-	 * @param contentTemplate      the content template
-	 * @param notificationMobileNo the notification mobile no
-	 * @throws IOException
-	 * @throws PreRegLoginException
-	 * @throws IdAuthenticationBusinessException the id authentication business
-	 *                                           exception
-	 */
-
 	public void invokeSmsNotification(Map values, String userId, MainRequestDTO<OtpRequestDTO> requestDTO,
-			String langCode) throws PreRegLoginException, IOException {
+									  String langCode) throws PreRegLoginException, IOException {
 		log.info("sessionId", "idType", "id", "In invokeSmsNotification method of notification service util");
 		String otpSmsTemplate = environment.getProperty(PreRegLoginConstant.OTP_SMS_TEMPLATE);
-		String smsTemplate = applyTemplate(values, otpSmsTemplate, langCode);
+		String reminderSmsTemplate = environment.getProperty(PreRegLoginConstant.REMINDER_SMS_TEMPLATE);
+		String smsTemplate = applyTemplate(values, reminderSmsTemplate, langCode);
 		sendSmsNotification(userId, smsTemplate, requestDTO);
 	}
 
@@ -192,22 +170,24 @@ public class NotificationServiceUtil {
 	 * Email notification.
 	 *
 	 * @param values          the values
-	 * @param emailId         the email id
-	 * @param sender          the sender
-	 * @param contentTemplate the content template
-	 * @param subjectTemplate the subject template
+//	 * @param emailId         the email id
+//	 * @param sender          the sender
+//	 * @param contentTemplate the content template
+//	 * @param subjectTemplate the subject template
 	 * @throws IOException
 	 * @throws PreRegLoginException
-	 * @throws IdAuthenticationBusinessException the id authentication business
+//	 * @throws IdAuthenticationBusinessException the id authentication business
 	 *                                           exception
 	 */
-	public void invokeEmailNotification(Map values, String userId, 
-			MainRequestDTO<OtpRequestDTO> requestDTO, String langCode) throws PreRegLoginException, IOException {
+	public void invokeEmailNotification(Map values, String userId,
+										MainRequestDTO<OtpRequestDTO> requestDTO, String langCode) throws PreRegLoginException, IOException {
 		log.info("sessionId", "idType", "id", "In invokeEmailNotification method of notification service util");
 		String otpContentTemaplate = environment.getProperty(PreRegLoginConstant.OTP_CONTENT_TEMPLATE);
 		String otpSubjectTemplate = environment.getProperty(PreRegLoginConstant.OTP_SUBJECT_TEMPLATE);
-		String mailSubject = applyTemplate(values, otpSubjectTemplate, langCode);
-		String mailContent = applyTemplate(values, otpContentTemaplate, langCode);
+		String reminderContentTemplate = environment.getProperty(PreRegLoginConstant.REMINDER_CONTENT_TEMPLATE);
+		String reminderSubjectTemplate = environment.getProperty(PreRegLoginConstant.REMINDER_SUBJECT_TEMPLATE);
+		String mailSubject = applyTemplate(values, reminderSubjectTemplate, langCode);
+		String mailContent = applyTemplate(values, reminderContentTemplate, langCode);
 		sendEmailNotification(userId, mailSubject, mailContent, requestDTO);
 	}
 
@@ -218,8 +198,8 @@ public class NotificationServiceUtil {
 	 * @param message              the message
 	 * @throws PreRegLoginException
 	 */
-	public void sendSmsNotification(String notificationMobileNo, String message, MainRequestDTO<OtpRequestDTO> requestDTO) 
-		throws PreRegLoginException {
+	public void sendSmsNotification(String notificationMobileNo, String message, MainRequestDTO<OtpRequestDTO> requestDTO)
+			throws PreRegLoginException {
 		try {
 			PreRegSmsRequestDto preRegSmsRequestDto = new PreRegSmsRequestDto();
 			SMSRequestDTO smsRequestDto = new SMSRequestDTO();
@@ -258,8 +238,8 @@ public class NotificationServiceUtil {
 	 * @param mailContent the mail content
 	 * @throws PreRegLoginException
 	 */
-	public void sendEmailNotification(String emailId, String mailSubject, String mailContent, 
-			MainRequestDTO<OtpRequestDTO> requestDTO) throws PreRegLoginException {
+	public void sendEmailNotification(String emailId, String mailSubject, String mailContent,
+									  MainRequestDTO<OtpRequestDTO> requestDTO) throws PreRegLoginException {
 		try {
 			PreRegMailRequestDto mailRequestDto = new PreRegMailRequestDto();
 			mailRequestDto.setMailSubject(mailSubject);
@@ -299,9 +279,9 @@ public class NotificationServiceUtil {
 	 * To apply Template for PDF Generation.
 	 *
 	 * @param templateName - template name for pdf format
-	 * @param values       - list of contents
+//	 * @param values       - list of contents
 	 * @return the string
-	 * @throws IdAuthenticationBusinessException the id authentication business
+//	 * @throws IdAuthenticationBusinessException the id authentication business
 	 *                                           exception
 	 * @throws IOException                       Signals that an I/O exception has
 	 *                                           occurred.
@@ -331,7 +311,7 @@ public class NotificationServiceUtil {
 	 *
 	 * @param templateName the template name
 	 * @return the string
-	 * @throws IdAuthenticationBusinessException the id authentication business
+//	 * @throws IdAuthenticationBusinessException the id authentication business
 	 *                                           exception
 	 */
 	public String fetchTemplate(String templateName, String langCode) throws PreRegLoginException {
@@ -382,131 +362,104 @@ public class NotificationServiceUtil {
 
 	}
 
-	@SuppressWarnings("null")
-	public NotificationDTO modifyCenterNameAndAddress(NotificationDTO notificationDto, String registrationCenterId,
-			String langCode) {
-		log.info("In modifyCenterNameAndAddress of NotificationServiceUtil for registrationCenterId {}", registrationCenterId);
-		if (notificationDto != null) {
-			List<KeyValuePairDto<String, String>> centerName = notificationDto.getRegistrationCenterName();
-			List<KeyValuePairDto<String, String>> address = notificationDto.getAddress();
-			if (centerName == null && address == null) {
-				centerName = new ArrayList<>();
-				address = new ArrayList<>();
-				String firstRegCenterLangCode = null;
-				Map<String, RegistrationCenterDto> regCentersMap = new HashMap<String, RegistrationCenterDto>();
-				for (KeyValuePairDto<String, String> key : notificationDto.getFullName()) {
-					String regCenterLangCode = (String) key.getKey();
-					RegistrationCenterDto centerDto = getNotificationCenterAddressDTO(registrationCenterId,
-							regCenterLangCode);
-					if (centerDto != null) {
-						if (firstRegCenterLangCode == null) {
-							firstRegCenterLangCode = regCenterLangCode;	
-						}
-						regCentersMap.put(regCenterLangCode, centerDto);
-					} else {
-						centerDto = getNotificationCenterAddressDTO(registrationCenterId,
-								"all");
-						if (firstRegCenterLangCode == null) {
-							firstRegCenterLangCode = regCenterLangCode;	
-						}
-						regCentersMap.put(regCenterLangCode, centerDto);
-					}
-				}
-				RegistrationCenterDto defaultCenterDto = null;
-				if (regCentersMap.size() > 0) {
-					defaultCenterDto = regCentersMap.get(firstRegCenterLangCode);
-				}
-				for (KeyValuePairDto<String, String> key : notificationDto.getFullName()) {
-					String regCenterLangCode = (String) key.getKey();
-					if (!regCentersMap.containsKey(regCenterLangCode)) {
-						regCentersMap.put(regCenterLangCode, defaultCenterDto);
-					}
-					RegistrationCenterDto centerDto = regCentersMap.get(regCenterLangCode);
-					KeyValuePairDto<String, String> regCenterDetailsName = new KeyValuePairDto<>();
-					regCenterDetailsName.setKey((String) key.getKey());
-					regCenterDetailsName.setValue(centerDto.getName());
-					centerName.add(regCenterDetailsName);
-					KeyValuePairDto<String, String> regCenterDetailsAddress = new KeyValuePairDto<>();
-					regCenterDetailsAddress.setKey((String) key.getKey());
-					StringBuilder sb = new StringBuilder(centerDto.getAddressLine1());
-					sb.append(" ").append(centerDto.getAddressLine2()).append(" ").append(centerDto.getAddressLine3());
-					regCenterDetailsAddress.setValue(sb.toString());
-					address.add(regCenterDetailsAddress);
-				}	
-				
-//				for (KeyValuePairDto<String, String> key : notificationDto.getFullName()) {
-//					RegistrationCenterDto centerDto = getNotificationCenterAddressDTO(registrationCenterId,
-//							(String) key.getKey());
-//					System.out.println("NotificationCenterDTO: " + centerDto);
-//					if (centerDto != null) {
-//						KeyValuePairDto<String, String> regCenterDetailsName = new KeyValuePairDto<>();
-//						regCenterDetailsName.setKey((String) key.getKey());
-//						regCenterDetailsName.setValue(centerDto.getName());
-//						centerName.add(regCenterDetailsName);
-//						KeyValuePairDto<String, String> regCenterDetailsAddress = new KeyValuePairDto<>();
-//						regCenterDetailsAddress.setKey((String) key.getKey());
-//						StringBuilder sb = new StringBuilder(centerDto.getAddressLine1());
-//						sb.append(" ").append(centerDto.getAddressLine2()).append(" ").append(centerDto.getAddressLine3());
-//						regCenterDetailsAddress.setValue(sb.toString());
-//						address.add(regCenterDetailsAddress);
-//					}
-//				}
+public NotificationDTO modifyCenterNameAndAddress(NotificationDTO notificationDto, String registrationCenterId,
+												  String langCode) {
+	log.info("In modifyCenterNameAndAddress of NotificationServiceUtil for registrationCenterId {}",
+			registrationCenterId);
 
-			}
-			notificationDto.setRegistrationCenterName(centerName);
-			notificationDto.setAddress(address);
-		}
-		//System.out.println("NotificationDto: " + notificationDto);
-		return notificationDto;
+	if (notificationDto == null) {
+		return null;
 	}
 
-	public ResponseWrapper<RegistrationCenterResponseDto> getRegistrationCenter(String registrationCenterId,
-			String langCode) {
-		ResponseWrapper<RegistrationCenterResponseDto> response = new ResponseWrapper<>();
-		ResponseEntity<ResponseWrapper<RegistrationCenterResponseDto>> responseEntity = null;
-//		String url = getAppointmentResourseUrl + "/appointment/" + preRegId;
-//		String url = "https://dev.mosip.net/v1/masterdata/registrationcenters/10001/eng"
-		String url = centerDetailUri + "/" + registrationCenterId + "/" + langCode;
+	String userLangCode = (langCode != null && !langCode.isEmpty()) ? langCode : defaultLanguage;
+	log.info("Fetching Registration center details for id {} and language code: {} ", registrationCenterId,
+			userLangCode);
+
+	RegistrationCenterDto centerDto = getRegistrationCenter(registrationCenterId, userLangCode);
+
+	List<KeyValuePairDto<String, String>> centerNameList = new ArrayList<>();
+	List<KeyValuePairDto<String, String>> addressList = new ArrayList<>();
+
+	if (notificationDto.getFullName() != null && !notificationDto.getFullName().isEmpty()) {
+		for (KeyValuePairDto<String, String> nameEntry : notificationDto.getFullName()) {
+			userLangCode = nameEntry.getKey(); // Language from the user's name
+			log.info("Processing name entry for pre-registration ID: {} and language code: {}",
+					notificationDto.getPreRegistrationId(), userLangCode);
+			if (centerDto != null) {
+				KeyValuePairDto<String, String> centerNamePair = new KeyValuePairDto<>();
+				centerNamePair.setKey(userLangCode);
+				centerNamePair.setValue(Objects.toString(centerDto.getName(), ""));
+				centerNameList.add(centerNamePair);
+
+				KeyValuePairDto<String, String> addressPair = new KeyValuePairDto<>();
+				addressPair.setKey(userLangCode);
+				addressPair.setValue(buildAddress(centerDto));
+				addressList.add(addressPair);
+
+			} else {
+				log.warn("No registration center details found for ID {} ", registrationCenterId);
+
+			}
+		}
+	} else {
+		log.warn("Full name field is empty in demographic data for pre-registration ID: {}",
+				notificationDto.getPreRegistrationId());
+	}
+
+	notificationDto.setRegistrationCenterName(centerNameList);
+	notificationDto.setAddress(addressList);
+	return notificationDto;
+}
+
+	private String buildAddress(RegistrationCenterDto centerDto) {
+		StringBuilder addressBuilder = new StringBuilder();
+		if (centerDto.getAddressLine1() != null) {
+			addressBuilder.append(centerDto.getAddressLine1());
+		}
+		if (centerDto.getAddressLine2() != null) {
+			addressBuilder.append(" ").append(centerDto.getAddressLine2());
+		}
+		if (centerDto.getAddressLine3() != null) {
+			addressBuilder.append(" ").append(centerDto.getAddressLine3());
+		}
+		return addressBuilder.toString().trim(); //Remove unnecessary spaces if present
+	}
+
+
+	public RegistrationCenterDto getRegistrationCenter(String registrationCenterId, String langCode) {
+		log.info("Fetching registration center details for ID: {} and language: {}", registrationCenterId, langCode);
+
+		String url = regCenterUrl + "/" + registrationCenterId + "/" + langCode;
+		log.info("Registration Center Details URL: {}", url); // Log the *final* URL
+
 		try {
-			log.info("sessionId", "idType", "id", "In Registration method of RegistrationCenterController" + url);
 			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
+			headers.setContentType(MediaType.APPLICATION_JSON); // Important for REST calls
 			HttpEntity<?> entity = new HttpEntity<>(headers);
-			log.debug("sessionId", "idType", "id", entity.toString());
-			responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity,
-					new ParameterizedTypeReference<ResponseWrapper<RegistrationCenterResponseDto>>() {
-					});
-			log.debug("sessionId", "idType", "id", responseEntity.toString());
-			ResponseWrapper<RegistrationCenterResponseDto> body = responseEntity.getBody();
-			if (body != null) {
-				if (body.getErrors() != null && !body.getErrors().isEmpty()) {
-					log.error("sessionId", "idType", "id", body.getErrors().toString());
-					response.setErrors(body.getErrors());
+
+			ResponseEntity<MainResponseDTO<RegistrationCenterDto>> responseEntity = restTemplate.exchange(
+					url,
+					HttpMethod.GET,
+					entity,
+					new ParameterizedTypeReference<MainResponseDTO<RegistrationCenterDto>>() {}); // Corrected parameterized type
+
+			if (responseEntity.getStatusCode().is2xxSuccessful()) {
+				MainResponseDTO<RegistrationCenterDto> body = responseEntity.getBody();
+				if (body != null && body.getResponse() != null) {
+					return body.getResponse();
 				} else {
-					response.setResponse(body.getResponse());
+					log.warn("Registration center details not found for ID {} and language code {}", registrationCenterId, langCode);
+					return null;
 				}
-				
+			} else {
+				log.error("Failed to retrieve registration center details. Status code: {}",
+						responseEntity.getStatusCode());
+				return null;
 			}
-			log.info("sessionId", "idType", "id", "In call to registrationcenter rest service :" + url);
-		} catch (Exception ex) {
-			log.debug("sessionId", "idType", "id", "Registration Center Details" + ExceptionUtils.getStackTrace(ex));
-			throw new RestClientException("Rest call failed");
-		}
-		return response;
-	}
 
-	public RegistrationCenterDto getNotificationCenterAddressDTO(String registrationCenterId, String langCode) {
-		RegistrationCenterDto centerDto = null;
-		ResponseWrapper<RegistrationCenterResponseDto> getRegistrationCenter = getRegistrationCenter(
-				registrationCenterId, langCode);
-		RegistrationCenterResponseDto registrationCenterResponseDto = getRegistrationCenter.getResponse();
-		if (registrationCenterResponseDto != null) {
-			if (registrationCenterResponseDto.getRegistrationCenters() != null
-					&& !registrationCenterResponseDto.getRegistrationCenters().isEmpty()) {
-				centerDto = registrationCenterResponseDto.getRegistrationCenters().get(0);
-			}
+		} catch (RestClientException ex) {
+			log.error("Error fetching registration center details: " + ex.getMessage(), ex);
+			return null; // Or throw a custom exception
 		}
-		return centerDto;
 	}
-
 }

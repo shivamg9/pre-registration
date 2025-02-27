@@ -1,6 +1,7 @@
 package io.mosip.preregistration.core.common.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
@@ -23,7 +24,8 @@ public class NotificationDTO implements Serializable {
 	/**
 	 * user name
 	 */
-	private String name;
+	 private String name;
+//	private List<KeyValuePairDto<String, String>> name = new ArrayList<>();
 
 	/**
 	 * Pre-Registration ID
@@ -56,11 +58,20 @@ public class NotificationDTO implements Serializable {
 	private Boolean isBatch;
 	
 	private String languageCode;
-	
-	private List<KeyValuePairDto<String,String>> fullName;
-	
-	private List<KeyValuePairDto<String,String>> registrationCenterName;
-	
-	private List<KeyValuePairDto<String,String>> address;
-	
+
+//	private String registrationCenterName;
+//	private String regcentreid;
+
+	private List<KeyValuePairDto<String, String>> fullName = new ArrayList<>();
+
+	private List<KeyValuePairDto<String, String>> registrationCenterName = new ArrayList<>();
+
+	private List<KeyValuePairDto<String, String>> address = new ArrayList<>();
+	public void setLangCode(String langCode) {
+		this.languageCode = langCode;
+	}
+	public String getLangCode() {
+		return languageCode;
+	}
+
 }

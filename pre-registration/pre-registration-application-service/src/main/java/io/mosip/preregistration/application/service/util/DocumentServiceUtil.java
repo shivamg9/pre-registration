@@ -344,6 +344,7 @@ public class DocumentServiceUtil {
 		try {
 			log.info("sessionId", "idType", "id", "In isVirusScanSuccess method of document service util");
 			return virusScan.scanDocument(file.getBytes());
+//			return true;
 		} catch (Exception e) {
 			log.error("sessionId", "idType", "id", ExceptionUtils.getStackTrace(e));
 			log.error("sessionId", "idType", "id", e.getMessage());

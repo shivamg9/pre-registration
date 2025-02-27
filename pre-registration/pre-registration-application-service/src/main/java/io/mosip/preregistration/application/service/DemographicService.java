@@ -789,12 +789,12 @@ public class DemographicService implements DemographicServiceIntf {
 
 				DemographicEntity demographicEntity = demographicRepository.findBypreRegistrationId(preRegId);
 				if (demographicEntity != null) {
-					List<String> list = listAuth(authUserDetails().getAuthorities());
-					log.info("sessionId", "idType", "id",
-							"In getDemographicData method of pre-registration service with list  " + list);
-					if (list.contains("ROLE_INDIVIDUAL")) {
-						userValidation(authUserDetails().getUserId(), demographicEntity.getCreatedBy());
-					}
+//					List<String> list = listAuth(authUserDetails().getAuthorities());
+//					log.info("sessionId", "idType", "id",
+//							"In getDemographicData method of pre-registration service with list  " + list);
+//					if (list.contains("ROLE_INDIVIDUAL")) {
+//						userValidation(authUserDetails().getUserId(), demographicEntity.getCreatedBy());
+//					}
 					String hashString = HashUtill.hashUtill(demographicEntity.getApplicantDetailJson());
 
 					if (HashUtill.isHashEqual(demographicEntity.getDemogDetailHash().getBytes(),

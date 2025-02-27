@@ -2,12 +2,15 @@ package io.mosip.preregistration.application;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableCaching
 @SpringBootApplication
+@EnableScheduling
 @ComponentScan(basePackages = { "io.mosip.*", "${mosip.lang.traslate.adapter.impl.basepackage}" }, excludeFilters = {
 		@ComponentScan.Filter(type = FilterType.REGEX, pattern = {
 				"io\\.mosip\\.kernel\\.keymigrate\\.service\\.spi\\.KeyMigratorService",
@@ -18,6 +21,8 @@ import org.springframework.context.annotation.FilterType;
 				"io\\.mosip\\.kernel\\.keymanagerservice\\..*", "io\\.mosip\\.kernel\\.keymanager\\..*",
 				"io\\.mosip\\.kernel\\.keygenerator\\..*", "io\\.mosip\\.kernel\\.cryptomanager\\..*",
 				"io\\.mosip\\.kernel\\.crypto\\..*", "io\\.mosip\\.kernel\\.clientcrypto\\..*" }) })
+//@EntityScan(basePackages = {"io.mosip.preregistration.application.entity"}) // Add this!
+
 public class PreRegistrationApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(PreRegistrationApplication.class, args);

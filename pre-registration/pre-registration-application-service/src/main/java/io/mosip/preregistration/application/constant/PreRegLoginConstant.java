@@ -5,6 +5,9 @@ public class PreRegLoginConstant {
 	public static final String OTP_SMS_TEMPLATE = "pre.reg.login.otp.sms.template";
 	public static final String OTP_SUBJECT_TEMPLATE = "pre.reg.login.otp.mail.subject.template";
 	public static final String OTP_CONTENT_TEMPLATE = "pre.reg.login.otp.mail.content.template";
+	public static final String REMINDER_SMS_TEMPLATE = "pre.reg.login.reminder.sms.template";
+	public static final String REMINDER_SUBJECT_TEMPLATE = "pre.reg.login.reminder.mail.subject.template";
+	public static final String REMINDER_CONTENT_TEMPLATE = "pre.reg.login.reminder.mail.content.template";
 	public static final String SESSION_ID = "sessionId";
 	public static final String ACTIVE_STATUS = "active";
 	public static final String PHONE_NUMBER = "phone";

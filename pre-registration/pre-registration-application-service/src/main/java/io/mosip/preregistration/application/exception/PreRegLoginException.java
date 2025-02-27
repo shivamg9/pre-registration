@@ -13,7 +13,7 @@ public class PreRegLoginException extends BaseUncheckedException {
 	public PreRegLoginException() {
 		super();
 	}
-	
+
 	public PreRegLoginException(String errorCode, String errorMessage) {
 		super(errorCode, errorMessage);
 	}
