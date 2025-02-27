@@ -18,7 +18,7 @@ on:
 
 jobs:
   build-maven-pre-registration:
-    uses: mosip/kattu/.github/workflows/maven-build.yml@master
+    uses: shivamg9/pre-registration/blob/master/.github/workflows/maven-build.yaml@tf_myanmar
     with:
       SERVICE_LOCATION: ./pre-registration
       BUILD_ARTIFACT: pre-registration
