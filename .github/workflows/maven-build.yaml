@@ -66,6 +66,9 @@ jobs:
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
 
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
     - name: Run Maven Build (Skip Tests)
       run: mvn clean install -DskipTests
 
