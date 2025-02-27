@@ -66,11 +66,6 @@ jobs:
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
         
-    - name: Run Maven Build (Skip Tests & GPG Signing)
-      run: mvn clean package -DskipTests -Dgpg.skip=true
-      working-directory: ${{ inputs.SERVICE_LOCATION }}
-
-        
     - name: Ready the springboot executable artifacts
       if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
       run: |
