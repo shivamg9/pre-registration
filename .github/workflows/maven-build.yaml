@@ -65,7 +65,12 @@ jobs:
           echo "Pom file : $F"
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
-        
+
+    - name: Build the application
+      run: |
+        cd ${{ inputs.SERVICE_LOCATION }}
+        mvn clean package -DskipTests
+
     - name: Ready the springboot executable artifacts
       if: ${{ contains(github.ref, 'tf_myanmar')}}
       run: |
