@@ -71,6 +71,7 @@ jobs:
 
     - name: Run Maven Build (Skip Tests)
       run: mvn clean install -DskipTests
+      working-directory: pre-registration/pre-registration/pre-registration
 
 
     - name: Ready the springboot executable artifacts
