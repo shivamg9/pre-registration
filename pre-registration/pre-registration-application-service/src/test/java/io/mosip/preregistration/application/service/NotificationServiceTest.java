@@ -705,6 +705,9 @@ public class NotificationServiceTest {
 		notificationService.sendNotification(stringjson, "fra", file, true);
 
 	}
+	@Test
+	public void setupBookingService(){
+	}
 
 	// @Test
 	// public void getAppointmentDetailsRestServiceTest() {
