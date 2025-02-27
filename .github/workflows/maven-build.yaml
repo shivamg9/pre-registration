@@ -65,20 +65,7 @@ jobs:
           echo "Pom file : $F"
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
-
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Run Maven Build (Skip Tests)
-      run: |
-        if [ -d "${{ inputs.SERVICE_LOCATION }}" ]; then
-          cd ${{ inputs.SERVICE_LOCATION }} && mvn clean install -DskipTests  -Dgpg.skip=true
-        else
-          echo "❌ ERROR: Directory ${{ inputs.SERVICE_LOCATION }} not found!"
-          exit 1
-        fi
-
-
+        
     - name: Ready the springboot executable artifacts
       if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
       run: |
