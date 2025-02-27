@@ -141,7 +141,7 @@ public class NotificationService {
 		log.info("NotificationService setup complete.  requiredRequestMap: {}", requiredRequestMap);
 	}
 
-	@Scheduled(cron = "0 45 16 * * ?") // Runs at 6:00 PM every day.  Correct cron.
+	@Scheduled(cron = "0 00 17 * * ?") // Runs at 6:00 PM every day.  Correct cron.
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");

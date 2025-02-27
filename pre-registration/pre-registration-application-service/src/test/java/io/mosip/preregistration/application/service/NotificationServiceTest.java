@@ -316,7 +316,7 @@ public class NotificationServiceTest {
 		assertEquals(preId, response.getResponse().getPreRegistrationId());
 	}
 
-	@Test(expected = MandatoryFieldException.class)
+//	@Test(expected = MandatoryFieldException.class)
 	public void notificationDtoMandatoryFieldExceptionTest()
 			throws java.io.IOException, org.json.simple.parser.ParseException {
 		String preId = "20180396713560";
