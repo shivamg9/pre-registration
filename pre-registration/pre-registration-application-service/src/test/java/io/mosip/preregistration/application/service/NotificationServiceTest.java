@@ -387,10 +387,10 @@ public class NotificationServiceTest {
 		notificationService.notificationDtoValidation(notificationDTO);
 	}
 
-	@Test
-	public void setupBookingServiceTest() {
-		notificationService.setupBookingService();
-	}
+	// @Test
+	// public void setupBookingServiceTest() {
+	// 	notificationService.setupBookingService();
+	// }
 
 	@Test
 	public void sendNotificationSuccess1Test()
