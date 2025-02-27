@@ -72,7 +72,7 @@ jobs:
     - name: Run Maven Build (Skip Tests)
       run: |
         if [ -d "${{ inputs.SERVICE_LOCATION }}" ]; then
-          cd ${{ inputs.SERVICE_LOCATION }} && mvn clean install -DskipTests
+          cd ${{ inputs.SERVICE_LOCATION }} && mvn clean install -DskipTests  -Dgpg.skip=true
         else
           echo "❌ ERROR: Directory ${{ inputs.SERVICE_LOCATION }} not found!"
           exit 1
