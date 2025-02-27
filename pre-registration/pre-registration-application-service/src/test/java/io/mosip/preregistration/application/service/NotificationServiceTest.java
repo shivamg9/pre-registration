@@ -1,6 +1,6 @@
 package io.mosip.preregistration.application.service;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.Ignore;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -84,7 +84,7 @@ import org.springframework.test.context.ContextConfiguration;
 @RunWith(JUnit4.class)
 @SpringBootTest
 @ContextConfiguration(classes = { NotificationService.class })
-@Disabled
+@Ignore
 public class NotificationServiceTest {
 
 	@InjectMocks
