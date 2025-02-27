@@ -66,8 +66,9 @@ jobs:
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
 
-    - name: Build with Maven
+    - name: Run Maven Build (Skip Tests)
       run: mvn clean install -DskipTests
+
 
     - name: Ready the springboot executable artifacts
       if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
