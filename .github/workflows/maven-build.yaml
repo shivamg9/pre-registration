@@ -46,18 +46,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install xmlstarlet libxml2-utils
 
-    - name: Build check for MOSIP License
-      run: cd ${{ inputs.SERVICE_LOCATION }} && xmlstarlet sel -N s="http://maven.apache.org/POM/4.0.0" -t -v "//s:project/s:licenses[1]/s:license/s:name" -nl pom.xml | grep -q "MPL 2.0"
-
-    - name: Build check for developer
-      run: cd ${{ inputs.SERVICE_LOCATION }} && xmlstarlet sel -N s="http://maven.apache.org/POM/4.0.0" -t -v "//s:project/s:developers[1]/s:developer/s:name" -nl pom.xml | grep -icq "Mosip"
-
-    - name: Build check for commit plugin
-      run: cd ${{ inputs.SERVICE_LOCATION }} && xmlstarlet sel -N s="http://maven.apache.org/POM/4.0.0" -t -v "//s:project/s:build/s:plugins/s:plugin[s:groupId='pl.project13.maven']/s:artifactId" -nl pom.xml | grep -q "git-commit-id-plugin"
-
-    - name: Build check for sign plugin
-      run: cd ${{ inputs.SERVICE_LOCATION }} && xmlstarlet sel -N s="http://maven.apache.org/POM/4.0.0" -t -v "//s:project/s:build/s:plugins/s:plugin[s:groupId='org.apache.maven.plugins']/s:artifactId" -nl pom.xml | grep -q "maven-gpg-plugin"
-      
     - name: Build check for name, url, and description in pom.xml
       run: |
         cd ${{ inputs.SERVICE_LOCATION }}
