@@ -1,6 +1,5 @@
 package io.mosip.preregistration.application.service;
 
-import org.junit.Ignore;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -84,7 +83,6 @@ import org.springframework.test.context.ContextConfiguration;
 @RunWith(JUnit4.class)
 @SpringBootTest
 @ContextConfiguration(classes = { NotificationService.class })
-@Ignore
 public class NotificationServiceTest {
 
 	@InjectMocks
@@ -270,14 +268,14 @@ public class NotificationServiceTest {
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 
 		TemplateResponseListDTO templateResponseListDTO = new TemplateResponseListDTO();
 		templateResponseListDTO.setTemplates(tepmlateList);
@@ -387,10 +385,10 @@ public class NotificationServiceTest {
 		notificationService.notificationDtoValidation(notificationDTO);
 	}
 
-	// @Test
-	// public void setupBookingServiceTest() {
-	// 	notificationService.setupBookingService();
-	// }
+//	@Test
+//	public void setupBookingServiceTest() {
+//		notificationService.setupBookingService();
+//	}
 
 	@Test
 	public void sendNotificationSuccess1Test()
@@ -420,14 +418,14 @@ public class NotificationServiceTest {
 		Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
 		String stringjson = null;
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 
 		TemplateResponseListDTO templateResponseListDTO = new TemplateResponseListDTO();
 		templateResponseListDTO.setTemplates(tepmlateList);
@@ -469,14 +467,14 @@ public class NotificationServiceTest {
 		Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
 		String stringjson = null;
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 
 		TemplateResponseListDTO templateResponseListDTO = new TemplateResponseListDTO();
 		templateResponseListDTO.setTemplates(tepmlateList);
@@ -516,14 +514,14 @@ public class NotificationServiceTest {
 		Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
 		String stringjson = null;
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 
 		TemplateResponseListDTO templateResponseListDTO = new TemplateResponseListDTO();
 		templateResponseListDTO.setTemplates(tepmlateList);
@@ -566,14 +564,14 @@ public class NotificationServiceTest {
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", false)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 		MultipartFile file = new MockMultipartFile("test.txt", "test.txt", null, new byte[1100]);
 		notificationService.sendNotification(stringjson, "fra", file, false);
 
@@ -608,14 +606,14 @@ public class NotificationServiceTest {
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 		MultipartFile file = new MockMultipartFile("test.txt", "test.txt", null, new byte[1100]);
 		notificationService.sendNotification(stringjson, "fra", file, true);
 
@@ -650,14 +648,14 @@ public class NotificationServiceTest {
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 		MultipartFile file = new MockMultipartFile("test.txt", "test.txt", null, new byte[1100]);
 		notificationService.sendNotification(stringjson, "fra", file, true);
 
@@ -688,29 +686,28 @@ public class NotificationServiceTest {
 			e.printStackTrace();
 		}
 		Mockito.when(demographicServiceIntf.getDemographicData(Mockito.any())).thenReturn(demographicdto);
-		// Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
+		Mockito.when(notificationUtil.getAppointmentDetails(Mockito.anyString())).thenReturn(bookingResultDto);
 
 		Mockito.when(validationUtil.requestValidator(Mockito.any(), Mockito.any())).thenReturn(true);
 
-		try {
-			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
-		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
-				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
-				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
-		} catch (com.fasterxml.jackson.core.JsonParseException
-				| com.fasterxml.jackson.databind.JsonMappingException ex) {
-		}
+//		try {
+//			Mockito.when(notificationServiceUtil.createNotificationDetails(null, "fra", true)).thenReturn(mainReqDto);
+//		} catch (RuntimeException | io.mosip.kernel.core.util.exception.JsonMappingException
+//				| io.mosip.kernel.core.exception.IOException | JSONException | java.text.ParseException
+//				| io.mosip.kernel.core.util.exception.JsonParseException ex) {
+//		} catch (com.fasterxml.jackson.core.JsonParseException
+//				| com.fasterxml.jackson.databind.JsonMappingException ex) {
+//		}
 
 		MultipartFile file = new MockMultipartFile("test.txt", "test.txt", null, new byte[1100]);
 		notificationService.sendNotification(stringjson, "fra", file, true);
 
 	}
-	
 
-	// @Test
-	// public void getAppointmentDetailsRestServiceTest() {
-	// 	String preId = "1234";
-	// 	Mockito.when(notificationUtil.getAppointmentDetails(preId)).thenReturn(bookingResultDto);
-	// 	Assert.assertNotNull(notificationService.getAppointmentDetailsRestService(preId));
-	// }
+//	@Test
+//	public void getAppointmentDetailsRestServiceTest() {
+//		String preId = "1234";
+//		Mockito.when(notificationUtil.getAppointmentDetails(preId)).thenReturn(bookingResultDto);
+//		Assert.assertNotNull(notificationService.getAppointmentDetailsRestService(preId));
+//	}
 }
