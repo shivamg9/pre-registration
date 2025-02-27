@@ -73,7 +73,6 @@ jobs:
         find ${{ inputs.SERVICE_LOCATION }} -path '*/target/*' -name '*.jar'  -type f  -executable -exec zip ${{ inputs.BUILD_ARTIFACT }}.zip {} +
 
     - name: Ready the springboot non-executable artifacts
-      if: ${{ inputs.MAVEN_NON_EXEC_ARTIFACTS }}
       run: |
           IFS=',' read -ra ARTIFACTS <<< "${{ inputs.MAVEN_NON_EXEC_ARTIFACTS }}"
           for ARTIFACT in "${ARTIFACTS[@]}"; do
