@@ -18,7 +18,7 @@ on:
 
 jobs:
   build-maven-pre-registration:
-    uses: ./.github/workflows/maven-build.yaml@tf_myanmar
+    uses: ./.github/workflows/maven-build.yaml
     with:
       SERVICE_LOCATION: ./pre-registration
       BUILD_ARTIFACT: pre-registration
