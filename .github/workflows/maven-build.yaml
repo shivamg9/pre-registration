@@ -70,8 +70,13 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Run Maven Build (Skip Tests)
-      run: mvn clean install -DskipTests
-      working-directory: pre-registration/pre-registration/pre-registration
+      run: |
+        if [ -d "${{ inputs.SERVICE_LOCATION }}" ]; then
+          cd ${{ inputs.SERVICE_LOCATION }} && mvn clean install -DskipTests
+        else
+          echo "❌ ERROR: Directory ${{ inputs.SERVICE_LOCATION }} not found!"
+          exit 1
+        fi
 
 
     - name: Ready the springboot executable artifacts
