@@ -66,7 +66,7 @@ jobs:
           xmllint --xpath '/*[local-name()="project"]/*[local-name()="version"]' $F
         done
 
-       - name: Ready the springboot executable artifacts
+    - name: Ready the springboot executable artifacts
       if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
       run: |
         ## FIND JARS & COPY ONLY EXECUTABLE JARs STORED UNDER TARGET DIRECTORY 
