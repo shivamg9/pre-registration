@@ -67,7 +67,7 @@ jobs:
         done
         
     - name: Ready the springboot executable artifacts
-      if: ${{ !contains(github.ref, 'tf_myanmar')}}
+      if: ${{ contains(github.ref, 'tf_myanmar')}}
       run: |
         ## FIND JARS & COPY ONLY EXECUTABLE JARs STORED UNDER TARGET DIRECTORY 
         find ${{ inputs.SERVICE_LOCATION }} -path '*/target/*' -name '*.jar'  -type f  -executable -exec zip ${{ inputs.BUILD_ARTIFACT }}.zip {} +
