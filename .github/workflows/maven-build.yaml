@@ -85,6 +85,12 @@ jobs:
             fi
           done
 
+    - name: Debug - Check for JAR Files
+      run: |
+         echo "Checking for JAR files..."
+         find ${{ inputs.SERVICE_LOCATION }} -path '*/target/*' -name '*.jar' -type f
+
+
     - name: Check if ZIP file exists
       run: |
         ls -al
