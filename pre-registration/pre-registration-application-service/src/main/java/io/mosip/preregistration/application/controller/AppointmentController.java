@@ -156,7 +156,7 @@ public class AppointmentController {
 		return ResponseEntity.status(HttpStatus.OK).body(appointmentService.makeMultiAppointment(bookingRequest, userAgent));
 	}
 @Autowired
-private YourScheduledService yourScheduledService;  // Inject Scheduled Task Service
+private NotificationService yourScheduledService;  // Inject Scheduled Task Service
 
 @GetMapping("/applications/appointment/run-reminder-task")
 public ResponseEntity<String> runScheduledTaskManually() {
