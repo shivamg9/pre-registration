@@ -38,6 +38,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import springfox.documentation.annotations.ApiIgnore;
 import io.mosip.preregistration.application.service.NotificationService;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "appointment-controller", description = "Appointment Controller")
