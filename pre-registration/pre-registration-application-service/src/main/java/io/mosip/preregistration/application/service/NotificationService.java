@@ -219,7 +219,7 @@ public class NotificationService {
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
 	// @Scheduled(cron = "0 30 16 * * ?")
-	@Scheduled(cron = "0 25 19 * * ?", zone = "UTC")
+	@Scheduled(cron = "0 41 19 * * ?", zone = "UTC")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
