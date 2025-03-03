@@ -67,8 +67,7 @@ jobs:
         done
 
     - name: Build the application
-      run: |
-        run: cd ${{ inputs.SERVICE_LOCATION }} && mvn -U -B package -Dmaven.wagon.http.retryHandler.count=2 --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
+      run: cd ${{ inputs.SERVICE_LOCATION }} && mvn -U -B package -Dmaven.wagon.http.retryHandler.count=2 --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
 
     - name: Ready the springboot executable artifacts
       if: ${{ contains(github.ref, 'tf_myanmar')}}
