@@ -90,9 +90,6 @@ public class NotificationService {
 	private NotificationUtil notificationUtil;
 
 
-	System.out.println("Task triggered at: " + java.time.LocalDateTime.now() + " UTC");
-
-
 	/**
 	 * The reference to {@link NotificationServiceUtil}.
 	 */
@@ -221,7 +218,8 @@ public class NotificationService {
 	/**
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
-	@Scheduled(cron = "0 30 16 * * ?")
+	// @Scheduled(cron = "0 30 16 * * ?")
+	@Scheduled(cron = "0 55 16 * * ?", zone = "Asia/Kolkata")  // Runs at 16:30 IST
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
