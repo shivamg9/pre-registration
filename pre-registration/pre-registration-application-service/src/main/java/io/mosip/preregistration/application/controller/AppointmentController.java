@@ -37,8 +37,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import springfox.documentation.annotations.ApiIgnore;
-import io.mosip.preregistration.application.service.NotificationService;
-
 
 @RestController
 @Tag(name = "appointment-controller", description = "Appointment Controller")
@@ -157,14 +155,6 @@ public class AppointmentController {
 			@RequestHeader(value = "User-Agent") String userAgent) {
 		return ResponseEntity.status(HttpStatus.OK).body(appointmentService.makeMultiAppointment(bookingRequest, userAgent));
 	}
-@Autowired
-private NotificationService yourScheduledService;  // Inject Scheduled Task Service
-
-@GetMapping("/applications/appointment/run-reminder-task")
-public ResponseEntity<String> runScheduledTaskManually() {
-    yourScheduledService.sendAppointmentReminders();
-    return ResponseEntity.ok("✅ Reminder Task Executed Successfully!");
-}
 
 
 }
