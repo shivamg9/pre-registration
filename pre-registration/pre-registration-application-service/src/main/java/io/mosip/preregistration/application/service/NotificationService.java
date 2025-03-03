@@ -218,7 +218,7 @@ public class NotificationService {
 	/**
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
-	@Scheduled(cron = "0 50 15 * * ?")
+	@Scheduled(cron = "0 25 16 * * ?")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
