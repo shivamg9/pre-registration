@@ -90,6 +90,9 @@ public class NotificationService {
 	private NotificationUtil notificationUtil;
 
 
+	System.out.println("Task triggered at: " + java.time.LocalDateTime.now() + " UTC");
+
+
 	/**
 	 * The reference to {@link NotificationServiceUtil}.
 	 */
