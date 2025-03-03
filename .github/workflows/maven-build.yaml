@@ -105,7 +105,7 @@ jobs:
         fi
         
     - name: Upload the springboot jars
-      if: ${{ !contains(github.ref, 'tf_myanmar')}}
+      if: ${{ contains(github.ref, 'tf_myanmar')}}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.BUILD_ARTIFACT }}
