@@ -219,14 +219,14 @@ public class NotificationService {
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
 	// @Scheduled(cron = "0 30 16 * * ?")
-	@Scheduled(cron = "0 42 18 * * ?", zone = "UTC")
+	@Scheduled(cron = "0 56 18 * * ?", zone = "UTC")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
 		
 		try {
 			// Get appointments for day after tomorrow to give adequate notice
-			LocalDate targetDate = LocalDate.now(ZoneId.of("UTC")).plusDays(2);
+			LocalDate targetDate = LocalDate.now(ZoneId.of("UTC")).plusDays(1);
 			List<ApplicationEntity> applications = applicationRepository.findByAppointmentDate(targetDate);
 
 			if (applications == null || applications.isEmpty()) {
