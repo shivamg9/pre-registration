@@ -66,6 +66,9 @@ public class NotificationDTO implements Serializable {
 
 	private List<KeyValuePairDto<String, String>> registrationCenterName = new ArrayList<>();
 
+	List<KeyValuePairDto<String, String>> templates = new ArrayList<>();
+
+
 	private List<KeyValuePairDto<String, String>> address = new ArrayList<>();
 	public void setLangCode(String langCode) {
 		this.languageCode = langCode;

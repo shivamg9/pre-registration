@@ -43,7 +43,7 @@ import io.mosip.preregistration.core.config.LoggerConfiguration;;
 
 /**
  * OTPManager handling with OTP-Generation and OTP-Validation.
- * 
+ *
  *
  */
 @Component
@@ -81,7 +81,7 @@ public class OTPManager {
 	@Autowired
 	@Qualifier("selfTokenRestTemplate")
 	RestTemplate restTemplate;
- 
+
 	@Autowired
 	private OtpTxnRepository otpRepo;
 
@@ -162,12 +162,12 @@ public class OTPManager {
 		if (channelType.equalsIgnoreCase(PreRegLoginConstant.PHONE_NUMBER)) {
 			logger.info("sessionId", "idType", "id",
 					"In generateOTP method of otpmanager service invoking sms notification");
-			notification.invokeSmsNotification(mp, userId, requestDTO, language);
+			notification.invokeSmsNotification(mp, userId, requestDTO, language, NotificationServiceUtil.NotificationType.OTP);
 		}
 		if (channelType.equalsIgnoreCase(PreRegLoginConstant.EMAIL)) {
 			logger.info("sessionId", "idType", "id",
 					"In generateOTP method of otpmanager service invoking email notification");
-			notification.invokeEmailNotification(mp, userId, requestDTO, language);
+			notification.invokeEmailNotification(mp, userId, requestDTO, language,NotificationServiceUtil.NotificationType.OTP);
 		}
 		return true;
 	}

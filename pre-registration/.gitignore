@@ -19,6 +19,7 @@ logs/
 *.swp
 *~.nib
 local.properties
+*.properties
 .loadpath
 .DS_Store
 test.txt
