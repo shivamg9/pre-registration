@@ -155,5 +155,14 @@ public class AppointmentController {
 			@RequestHeader(value = "User-Agent") String userAgent) {
 		return ResponseEntity.status(HttpStatus.OK).body(appointmentService.makeMultiAppointment(bookingRequest, userAgent));
 	}
+@Autowired
+private YourScheduledService yourScheduledService;  // Inject Scheduled Task Service
+
+@GetMapping("/applications/appointment/run-reminder-task")
+public ResponseEntity<String> runScheduledTaskManually() {
+    yourScheduledService.sendAppointmentReminders();
+    return ResponseEntity.ok("✅ Reminder Task Executed Successfully!");
+}
+
 
 }
