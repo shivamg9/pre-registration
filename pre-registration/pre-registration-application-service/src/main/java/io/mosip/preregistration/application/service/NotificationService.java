@@ -219,7 +219,7 @@ public class NotificationService {
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
 	// @Scheduled(cron = "0 30 16 * * ?")
-	@Scheduled(cron = "0 23 04 * * ?", zone = "UTC")
+	@Scheduled(cron = "0 45 04 * * ?", zone = "UTC")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
@@ -787,10 +787,10 @@ public class NotificationService {
 		// Throw exception if any validation fails
 		if (!missingFields.isEmpty() || !invalidFields.isEmpty()) {
 			StringBuilder errorMsg = new StringBuilder();
-			if (!missingFields.isEmpty()) {
-				errorMsg.append("Missing mandatory fields: ")
-					   .append(String.join(", ", missingFields));
-			}
+			//if (!missingFields.isEmpty()) {
+			//	errorMsg.append("Missing mandatory fields: ")
+			//		   .append(String.join(", ", missingFields));
+			//}
 			if (!invalidFields.isEmpty()) {
 				if (errorMsg.length() > 0) errorMsg.append("; ");
 				errorMsg.append("Invalid fields: ")
