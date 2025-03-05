@@ -582,13 +582,13 @@ public class NotificationService {
 				String appointmentTime = getNodeTextValue(requestNode, "appointmentTime");
 				String name = getNodeTextValue(requestNode, "name");
 				
-				if (preRegId == null || appointmentDate == null || 
-					appointmentTime == null || name == null) {
-					throw new MandatoryFieldException(
-						NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-						"Missing required fields in reminder notification",
-						response);
-				}
+				// if (preRegId == null || appointmentDate == null || 
+				// 	appointmentTime == null || name == null) {
+				// 	throw new MandatoryFieldException(
+				// 		NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
+				// 		"Missing required fields in reminder notification",
+				// 		response);
+				// }
 				
 				notificationDto.setPreRegistrationId(preRegId);
 				notificationDto.setAppointmentDate(appointmentDate);
