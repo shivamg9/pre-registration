@@ -539,7 +539,7 @@ public class NotificationService {
 			log.warn("Registration center address is missing for PreRegID: {}", dto.getPreRegistrationId());
 		}
 		
-		if (missingFields.isEmpty()) {
+		if (!missingFields.isEmpty()) {
 			String errorMessage = "Missing required fields for reminder notification: " + 
 								String.join(", ", missingFields);
 			log.error(errorMessage);
