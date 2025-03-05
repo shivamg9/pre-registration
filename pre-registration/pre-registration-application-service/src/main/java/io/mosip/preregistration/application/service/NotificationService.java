@@ -219,7 +219,7 @@ public class NotificationService {
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
 	// @Scheduled(cron = "0 30 16 * * ?")
-	@Scheduled(cron = "0 45 04 * * ?", zone = "UTC")
+	@Scheduled(cron = "0 24 19 * * ?", zone = "UTC")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
@@ -642,7 +642,7 @@ public class NotificationService {
 			}
 
 			// Validate mandatory fields
-			validateNotificationDto(notificationDto);
+			// validateNotificationDto(notificationDto);
 
 			response.setId(rootNode.get("id").asText());
 			response.setVersion(rootNode.get("version").asText());
@@ -744,65 +744,65 @@ public class NotificationService {
 			   node.get(fieldName).asText() : null;
 	}
 
-	private void validateNotificationDto(NotificationDTO dto) {
-		List<String> missingFields = new ArrayList<>();
-		List<String> invalidFields = new ArrayList<>();
+	// private void validateNotificationDto(NotificationDTO dto) {
+	// 	List<String> missingFields = new ArrayList<>();
+	// 	List<String> invalidFields = new ArrayList<>();
 		
-		// Check required fields
-		if (dto.getPreRegistrationId() == null || dto.getPreRegistrationId().trim().isEmpty()) {
-			missingFields.add("preRegistrationId");
-		}
-		if (dto.getAppointmentDate() == null || dto.getAppointmentDate().trim().isEmpty()) {
-			missingFields.add("appointmentDate");
-		}
-		if (dto.getAppointmentTime() == null || dto.getAppointmentTime().trim().isEmpty()) {
-			missingFields.add("appointmentTime");
-		}
-		if (dto.getName() == null || dto.getName().trim().isEmpty()) {
-			missingFields.add("name");
-		}
+	// 	// Check required fields
+	// 	if (dto.getPreRegistrationId() == null || dto.getPreRegistrationId().trim().isEmpty()) {
+	// 		missingFields.add("preRegistrationId");
+	// 	}
+	// 	if (dto.getAppointmentDate() == null || dto.getAppointmentDate().trim().isEmpty()) {
+	// 		missingFields.add("appointmentDate");
+	// 	}
+	// 	if (dto.getAppointmentTime() == null || dto.getAppointmentTime().trim().isEmpty()) {
+	// 		missingFields.add("appointmentTime");
+	// 	}
+	// 	if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+	// 		missingFields.add("name");
+	// 	}
 		
-		// Validate contact information
-		boolean hasValidContact = false;
-		if (dto.getEmailID() != null && !dto.getEmailID().trim().isEmpty()) {
-			if (!validationUtil.emailValidator(dto.getEmailID().trim())) {
-				invalidFields.add("emailID (invalid format)");
-			} else {
-				hasValidContact = true;
-			}
-		}
+	// 	// Validate contact information
+	// 	boolean hasValidContact = false;
+	// 	if (dto.getEmailID() != null && !dto.getEmailID().trim().isEmpty()) {
+	// 		if (!validationUtil.emailValidator(dto.getEmailID().trim())) {
+	// 			invalidFields.add("emailID (invalid format)");
+	// 		} else {
+	// 			hasValidContact = true;
+	// 		}
+	// 	}
 		
-		if (dto.getMobNum() != null && !dto.getMobNum().trim().isEmpty()) {
-			if (!validationUtil.phoneValidator(dto.getMobNum().trim())) {
-				invalidFields.add("mobNum (invalid format)");
-			} else {
-				hasValidContact = true;
-			}
-		}
+	// 	if (dto.getMobNum() != null && !dto.getMobNum().trim().isEmpty()) {
+	// 		if (!validationUtil.phoneValidator(dto.getMobNum().trim())) {
+	// 			invalidFields.add("mobNum (invalid format)");
+	// 		} else {
+	// 			hasValidContact = true;
+	// 		}
+	// 	}
 		
-		if (!hasValidContact) {
-			missingFields.add("contact information (either email or mobile number)");
-		}
+	// 	if (!hasValidContact) {
+	// 		missingFields.add("contact information (either email or mobile number)");
+	// 	}
 		
-		// Throw exception if any validation fails
-		if (!missingFields.isEmpty() || !invalidFields.isEmpty()) {
-			StringBuilder errorMsg = new StringBuilder();
-			//if (!missingFields.isEmpty()) {
-			//	errorMsg.append("Missing mandatory fields: ")
-			//		   .append(String.join(", ", missingFields));
-			//}
-			if (!invalidFields.isEmpty()) {
-				if (errorMsg.length() > 0) errorMsg.append("; ");
-				errorMsg.append("Invalid fields: ")
-					   .append(String.join(", ", invalidFields));
-			}
+	// 	// Throw exception if any validation fails
+	// 	if (!missingFields.isEmpty() || !invalidFields.isEmpty()) {
+	// 		StringBuilder errorMsg = new StringBuilder();
+	// 		//if (!missingFields.isEmpty()) {
+	// 		//	errorMsg.append("Missing mandatory fields: ")
+	// 		//		   .append(String.join(", ", missingFields));
+	// 		//}
+	// 		if (!invalidFields.isEmpty()) {
+	// 			if (errorMsg.length() > 0) errorMsg.append("; ");
+	// 			errorMsg.append("Invalid fields: ")
+	// 				   .append(String.join(", ", invalidFields));
+	// 		}
 			
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				errorMsg.toString(),
-				response);
-		}
-	}
+	// 		throw new MandatoryFieldException(
+	// 			NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
+	// 			errorMsg.toString(),
+	// 			response);
+	// 	}
+	// }
 
 	private List<ExceptionJSONInfoDTO> convertServiceErrors(Exception ex) {
 		List<ExceptionJSONInfoDTO> errors = new ArrayList<>();
