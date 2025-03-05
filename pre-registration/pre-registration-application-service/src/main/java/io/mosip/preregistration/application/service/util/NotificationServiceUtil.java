@@ -167,8 +167,7 @@ public class NotificationServiceUtil {
 	 */
 
 	@SuppressWarnings("unchecked")
-	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String langauageCode,
-																	 boolean isLatest)
+	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String langauageCode,boolean isLatest)
 			throws JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException, JSONException,
 			ParseException, com.fasterxml.jackson.core.JsonParseException,
 			com.fasterxml.jackson.databind.JsonMappingException, IOException {
