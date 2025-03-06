@@ -110,7 +110,8 @@ public class NotificationServiceUtil {
 	// ENUM for Notification Type
 	public enum NotificationType {
 		OTP,
-		REMINDER
+		REMINDER,
+		BOOKING
 	}
 
 	@Autowired
@@ -132,6 +133,9 @@ public class NotificationServiceUtil {
 		public static final String SMS_TEMPLATE = "mosip.pre-registration.notification.otp.sms.template";
 		public static final String EMAIL_CONTENT = "mosip.pre-registration.notification.otp.email.content";
 		public static final String EMAIL_SUBJECT = "mosip.pre-registration.notification.otp.email.subject";
+		public static final String BOOKING_SMS_TEMPLATE = "mosip.pre-registration.notification.ack.sms.template";
+		public static final String BOOKING_EMAIL_CONTENT = "mosip.pre-registration.notification.ack.email.content";
+		public static final String BOOKING_EMAIL_SUBJECT = "mosip.pre-registration.notification.ack.email.subject";
 	}
 
 	// Error code class
@@ -167,7 +171,8 @@ public class NotificationServiceUtil {
 	 */
 
 	@SuppressWarnings("unchecked")
-	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String langauageCode,boolean isLatest)
+	public MainRequestDTO<NotificationDTO> createNotificationDetails(String jsonString, String langauageCode,
+																	 boolean isLatest)
 			throws JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException, JSONException,
 			ParseException, com.fasterxml.jackson.core.JsonParseException,
 			com.fasterxml.jackson.databind.JsonMappingException, IOException {
@@ -239,6 +244,8 @@ public class NotificationServiceUtil {
 			smsTemplate = environment.getProperty(PreRegLoginConstant.SMS_TEMPLATE);
 		} else if (notificationType == NotificationType.REMINDER) {
 			smsTemplate = reminderSmsTemplate;
+		} else {
+			smsTemplate = environment.getProperty(PreRegLoginConstant.BOOKING_SMS_TEMPLATE);
 		}
 
 		if (smsTemplate == null) {
@@ -278,23 +285,20 @@ public class NotificationServiceUtil {
 		if (notificationType == NotificationType.OTP) {
 			contentTemplate = environment.getProperty(PreRegLoginConstant.EMAIL_CONTENT);
 			subjectTemplate = environment.getProperty(PreRegLoginConstant.EMAIL_SUBJECT);
-			
-			if (contentTemplate == null || subjectTemplate == null) {
-				log.error("OTP email templates not found in environment properties. Content template: {}, Subject template: {}", 
-					PreRegLoginConstant.EMAIL_CONTENT, PreRegLoginConstant.EMAIL_SUBJECT);
-				throw new PreRegLoginException(PreRegLoginErrorConstants.TEMPLATE_ERROR.getErrorCode(),
-						"OTP email templates not configured properly");
-			}
 		} else if (notificationType == NotificationType.REMINDER) {
 			contentTemplate = reminderEmailContentTemplate;
 			subjectTemplate = reminderEmailSubjectTemplate;
-			
-			if (contentTemplate == null || subjectTemplate == null) {
-				log.error("Reminder email templates not configured. Content template: {}, Subject template: {}", 
-					"reminder.email.content.template", "reminder.email.subject.template");
-				throw new PreRegLoginException(PreRegLoginErrorConstants.TEMPLATE_ERROR.getErrorCode(),
-						"Reminder email templates not configured properly");
-			}
+		} else {
+			contentTemplate = environment.getProperty(PreRegLoginConstant.BOOKING_EMAIL_CONTENT);
+			subjectTemplate = environment.getProperty(PreRegLoginConstant.BOOKING_EMAIL_SUBJECT);
+		}
+		
+		if (contentTemplate == null || subjectTemplate == null) {
+			String templateType = notificationType == NotificationType.OTP ? "OTP" : 
+								notificationType == NotificationType.REMINDER ? "Reminder" : "Booking";
+			log.error("{} email templates not found in environment properties.", templateType);
+			throw new PreRegLoginException(PreRegLoginErrorConstants.TEMPLATE_ERROR.getErrorCode(),
+					templateType + " email templates not configured properly");
 		}
 
 		log.debug("Using email templates - Content: {}, Subject: {}", contentTemplate, subjectTemplate);
@@ -724,4 +728,3 @@ public class NotificationServiceUtil {
 	}
 
 }
-
