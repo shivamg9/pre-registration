@@ -262,5 +262,6 @@ public class AuditLogUtil {
 		}
 		return auditFlag;
 	}
-
+	public void logAuditEvent(String eventId, String eventName, String eventType, String description, String idType, String id, String username) {
+    }
 }
