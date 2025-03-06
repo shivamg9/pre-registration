@@ -78,7 +78,7 @@ public class NotificationUtil {
 	private String dateTimeFormat;
 
 	public MainResponseDTO<NotificationResponseDTO> notify(String notificationType, NotificationDTO acknowledgementDTO,
-			MultipartFile file) throws IOException {
+														   MultipartFile file) throws IOException {
 
 		log.info("sessionId", "idType", "id", "In notify method of NotificationUtil service:" + notificationType);
 
@@ -95,26 +95,15 @@ public class NotificationUtil {
 
 	/**
 	 * This method will send the email notification to the user
-	 * 
+	 *
 	 * @param acknowledgementDTO
 	 * @param file
 	 * @return
 	 * @throws IOException
 	 */
 	public MainResponseDTO<NotificationResponseDTO> emailNotification(NotificationDTO acknowledgementDTO,
-			MultipartFile file) throws IOException {
+																	  MultipartFile file) throws IOException {
 		log.info("sessionId", "idType", "id", "In emailNotification method of NotificationUtil service");
-		
-		if (acknowledgementDTO == null || acknowledgementDTO.getEmailID() == null) {
-			log.error("Email notification failed - NotificationDTO or email ID is null");
-			throw new IllegalArgumentException("NotificationDTO and email ID cannot be null");
-		}
-
-		if (acknowledgementDTO.getFullName() == null || acknowledgementDTO.getFullName().isEmpty()) {
-			log.error("Email notification failed - Full name is missing");
-			throw new IllegalArgumentException("Full name cannot be null or empty");
-		}
-
 		HttpEntity<byte[]> doc = null;
 		String fileText = null;
 		if (file != null) {
@@ -128,80 +117,58 @@ public class NotificationUtil {
 		ResponseEntity<ResponseWrapper<NotificationResponseDTO>> resp = null;
 		MainResponseDTO<NotificationResponseDTO> response = new MainResponseDTO<>();
 		String mergeTemplate = null;
-		
-		try {
-			for (KeyValuePairDto keyValuePair : acknowledgementDTO.getFullName()) {
-				if (keyValuePair == null || keyValuePair.getKey() == null) {
-					continue;
-				}
-
-				if (acknowledgementDTO.getIsBatch()) {
-					fileText = templateUtil.getTemplate(keyValuePair.getKey(), cancelAppoinment);
-				} else {
-					fileText = templateUtil.getTemplate(keyValuePair.getKey(), emailAcknowledgement);
-				}
-
-				if (fileText == null) {
-					log.warn("Template text is null for language: {}", keyValuePair.getKey());
-					continue;
-				}
-
-				String languageWiseTemplate = templateUtil.templateMerge(fileText, acknowledgementDTO,
-						(String) keyValuePair.getKey());
-				if (mergeTemplate == null) {
-					mergeTemplate = languageWiseTemplate + System.lineSeparator();
-				} else {
-					mergeTemplate += System.lineSeparator() + languageWiseTemplate + System.lineSeparator();
-				}
-			}
-
-			if (mergeTemplate == null) {
-				log.error("Email notification failed - No valid template content generated");
-				throw new IllegalStateException("No valid template content could be generated");
-			}
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-			MultiValueMap<Object, Object> emailMap = new LinkedMultiValueMap<>();
-			emailMap.add("attachments", doc);
-			emailMap.add("mailContent", mergeTemplate);
-			if (acknowledgementDTO.getIsBatch() && cancelAppointmentEmailSubject != null) {
-				emailMap.add("mailSubject", getCancelAppointmentEmailSubject(acknowledgementDTO));
+		for (KeyValuePairDto keyValuePair : acknowledgementDTO.getFullName()) {
+			if (acknowledgementDTO.getIsBatch()) {
+				fileText = templateUtil.getTemplate(keyValuePair.getKey(), cancelAppoinment);
+//				fileText.concat(System.lineSeparator() + System.lineSeparator());
 			} else {
-				emailMap.add("mailSubject", getEmailSubject(acknowledgementDTO));
+				fileText = templateUtil.getTemplate(keyValuePair.getKey(), emailAcknowledgement);
+//				fileText.concat(System.lineSeparator() + System.lineSeparator());
 			}
-			emailMap.add("mailTo", acknowledgementDTO.getEmailID());
-			HttpEntity<MultiValueMap<Object, Object>> httpEntity = new HttpEntity<>(emailMap, headers);
-			
-			log.info("Sending email notification to: {}", acknowledgementDTO.getEmailID());
+
+			String languageWiseTemplate = templateUtil.templateMerge(fileText, acknowledgementDTO,
+					(String) keyValuePair.getKey());
+			if (mergeTemplate == null) {
+				mergeTemplate = languageWiseTemplate + System.lineSeparator();
+			} else {
+				mergeTemplate += System.lineSeparator() + languageWiseTemplate +System.lineSeparator();
+			}
+		}
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		MultiValueMap<Object, Object> emailMap = new LinkedMultiValueMap<>();
+		emailMap.add("attachments", doc);
+		emailMap.add("mailContent", mergeTemplate);
+		if (acknowledgementDTO.getIsBatch() && cancelAppointmentEmailSubject != null) {
+			emailMap.add("mailSubject", getCancelAppointmentEmailSubject(acknowledgementDTO));
+		} else {
+			emailMap.add("mailSubject", getEmailSubject(acknowledgementDTO));
+		}
+		emailMap.add("mailTo", acknowledgementDTO.getEmailID());
+		HttpEntity<MultiValueMap<Object, Object>> httpEntity = new HttpEntity<>(emailMap, headers);
+		log.info("sessionId", "idType", "id",
+				"In emailNotification method of NotificationUtil service emailResourseUrl: " + emailResourseUrl);
+		try {
 			resp = restTemplate.exchange(emailResourseUrl, HttpMethod.POST, httpEntity,
 					new ParameterizedTypeReference<ResponseWrapper<NotificationResponseDTO>>() {
 					});
-
-			if (resp == null || resp.getBody() == null || resp.getBody().getResponse() == null) {
-				throw new RestCallException("Invalid response from email service");
-			}
-
-			NotificationResponseDTO notifierResponse = new NotificationResponseDTO();
-			notifierResponse.setMessage(resp.getBody().getResponse().getMessage());
-			notifierResponse.setStatus(resp.getBody().getResponse().getStatus());
-			response.setResponse(notifierResponse);
-			response.setResponsetime(getCurrentResponseTime());
-
 		} catch (RestClientException e) {
-			log.error("Email notification failed - REST client error: {}", e.getMessage());
-			throw new RestCallException("Failed to send email notification: " + e.getMessage());
-		} catch (Exception e) {
-			log.error("Email notification failed - Unexpected error: {}", e.getMessage());
-			throw new RestCallException("Failed to process email notification: " + e.getMessage());
+			throw new RestCallException(e.getMessage(), e.getCause());
 		}
+
+		NotificationResponseDTO notifierResponse = new NotificationResponseDTO();
+		notifierResponse.setMessage(resp.getBody().getResponse().getMessage());
+		notifierResponse.setStatus(resp.getBody().getResponse().getStatus());
+		response.setResponse(notifierResponse);
+		response.setResponsetime(getCurrentResponseTime());
 
 		return response;
 	}
 
 	/**
 	 * This method will give the email subject
-	 * 
+	 *
 	 * @param acknowledgementDTO
 	 * @return
 	 * @throws IOException
@@ -224,7 +191,7 @@ public class NotificationUtil {
 
 	/**
 	 * This method will give the email subject for Cancel Appointment
-	 * 
+	 *
 	 * @param acknowledgementDTO
 	 * @return
 	 * @throws IOException
@@ -247,7 +214,7 @@ public class NotificationUtil {
 
 	/**
 	 * This method will send the sms notification to the user
-	 * 
+	 *
 	 * @param acknowledgementDTO
 	 * @return
 	 * @throws IOException
@@ -255,85 +222,47 @@ public class NotificationUtil {
 	public MainResponseDTO<NotificationResponseDTO> smsNotification(NotificationDTO acknowledgementDTO)
 			throws IOException {
 		log.info("sessionId", "idType", "id", "In smsNotification method of NotificationUtil service");
-		
-		if (acknowledgementDTO == null || acknowledgementDTO.getMobNum() == null) {
-			log.error("SMS notification failed - NotificationDTO or mobile number is null");
-			throw new IllegalArgumentException("NotificationDTO and mobile number cannot be null");
-		}
-
-		if (acknowledgementDTO.getFullName() == null || acknowledgementDTO.getFullName().isEmpty()) {
-			log.error("SMS notification failed - Full name is missing");
-			throw new IllegalArgumentException("Full name cannot be null or empty");
-		}
-
 		MainResponseDTO<NotificationResponseDTO> response = new MainResponseDTO<>();
 		ResponseEntity<ResponseWrapper<NotificationResponseDTO>> resp = null;
 		String mergeTemplate = null;
-
-		try {
-			for (KeyValuePairDto keyValuePair : acknowledgementDTO.getFullName()) {
-				if (keyValuePair == null || keyValuePair.getKey() == null) {
-					continue;
-				}
-
-				String languageWiseTemplate = null;
-				String template = acknowledgementDTO.getIsBatch() ? 
-					templateUtil.getTemplate(keyValuePair.getKey(), cancelAppoinment) :
-					templateUtil.getTemplate(keyValuePair.getKey(), smsAcknowledgement);
-
-				if (template == null) {
-					log.warn("Template text is null for language: {}", keyValuePair.getKey());
-					continue;
-				}
-
-				languageWiseTemplate = templateUtil.templateMerge(template, acknowledgementDTO,
+		for (KeyValuePairDto keyValuePair : acknowledgementDTO.getFullName()) {
+			String languageWiseTemplate = null;
+			if (acknowledgementDTO.getIsBatch()) {
+				languageWiseTemplate = templateUtil.templateMerge(
+						templateUtil.getTemplate(keyValuePair.getKey(), cancelAppoinment), acknowledgementDTO,
 						(String) keyValuePair.getKey());
-				
-				if (mergeTemplate == null) {
-					mergeTemplate = languageWiseTemplate;
-				} else {
-					mergeTemplate += System.lineSeparator() + languageWiseTemplate;
-				}
+			} else {
+				languageWiseTemplate = templateUtil.templateMerge(
+						templateUtil.getTemplate(keyValuePair.getKey(), smsAcknowledgement), acknowledgementDTO,
+						(String) keyValuePair.getKey());
 			}
-
 			if (mergeTemplate == null) {
-				log.error("SMS notification failed - No valid template content generated");
-				throw new IllegalStateException("No valid template content could be generated");
+				mergeTemplate = languageWiseTemplate;
+			} else {
+				mergeTemplate += System.lineSeparator() + languageWiseTemplate;
 			}
-
-			SMSRequestDTO smsRequestDTO = new SMSRequestDTO();
-			smsRequestDTO.setMessage(mergeTemplate);
-			smsRequestDTO.setNumber(acknowledgementDTO.getMobNum());
-			RequestWrapper<SMSRequestDTO> req = new RequestWrapper<>();
-			req.setRequest(smsRequestDTO);
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-			HttpEntity<RequestWrapper<SMSRequestDTO>> httpEntity = new HttpEntity<>(req, headers);
-
-			log.info("Sending SMS notification to: {}", acknowledgementDTO.getMobNum());
-			resp = restTemplate.exchange(smsResourseUrl, HttpMethod.POST, httpEntity,
-					new ParameterizedTypeReference<ResponseWrapper<NotificationResponseDTO>>() {
-					});
-
-			if (resp == null || resp.getBody() == null || resp.getBody().getResponse() == null) {
-				throw new RestCallException("Invalid response from SMS service");
-			}
-
-			NotificationResponseDTO notifierResponse = new NotificationResponseDTO();
-			notifierResponse.setMessage(resp.getBody().getResponse().getMessage());
-			notifierResponse.setStatus(resp.getBody().getResponse().getStatus());
-			response.setResponse(notifierResponse);
-			response.setResponsetime(getCurrentResponseTime());
-
-		} catch (RestClientException e) {
-			log.error("SMS notification failed - REST client error: {}", e.getMessage());
-			throw new RestCallException("Failed to send SMS notification: " + e.getMessage());
-		} catch (Exception e) {
-			log.error("SMS notification failed - Unexpected error: {}", e.getMessage());
-			throw new RestCallException("Failed to process SMS notification: " + e.getMessage());
 		}
 
+		SMSRequestDTO smsRequestDTO = new SMSRequestDTO();
+		smsRequestDTO.setMessage(mergeTemplate);
+		smsRequestDTO.setNumber(acknowledgementDTO.getMobNum());
+		RequestWrapper<SMSRequestDTO> req = new RequestWrapper<>();
+		req.setRequest(smsRequestDTO);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+
+		HttpEntity<RequestWrapper<SMSRequestDTO>> httpEntity = new HttpEntity<>(req, headers);
+		log.info("sessionId", "idType", "id",
+				"In smsNotification method of NotificationUtil service smsResourseUrl: " + smsResourseUrl);
+		resp = restTemplate.exchange(smsResourseUrl, HttpMethod.POST, httpEntity,
+				new ParameterizedTypeReference<ResponseWrapper<NotificationResponseDTO>>() {
+				});
+
+		NotificationResponseDTO notifierResponse = new NotificationResponseDTO();
+		notifierResponse.setMessage(resp.getBody().getResponse().getMessage());
+		notifierResponse.setStatus(resp.getBody().getResponse().getStatus());
+		response.setResponse(notifierResponse);
+		response.setResponsetime(getCurrentResponseTime());
 		return response;
 	}
 
