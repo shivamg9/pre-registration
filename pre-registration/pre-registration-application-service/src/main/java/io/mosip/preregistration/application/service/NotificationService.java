@@ -198,14 +198,17 @@ public class NotificationService {
 		requiredRequestMap.put("version", version);
 	}
 
+//	public AuthUserDetails authUserDetails() {
+//		try {
+//			return (AuthUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//		} catch (Exception e) {
+//			log.error("Failed to get AuthUserDetails", e);
+//			// Return null or a default/empty AuthUserDetails object
+//			return null; // Or a suitable default/empty object
+//		}
+//	}
 	public AuthUserDetails authUserDetails() {
-		try {
 			return (AuthUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		} catch (Exception e) {
-			log.error("Failed to get AuthUserDetails", e);
-			// Return null or a default/empty AuthUserDetails object
-			return null; // Or a suitable default/empty object
-		}
 	}
 
 	@PostConstruct
@@ -218,38 +221,37 @@ public class NotificationService {
 	/**
 	 * Scheduled task to send appointment reminders. Runs daily at 3:35 AM UTC.
 	 */
-	// @Scheduled(cron = "0 30 16 * * ?")
-	@Scheduled(cron = "0 19 20 * * ?", zone = "UTC")
+	@Scheduled(cron = "0 4 10 * * ?")
 	@Transactional
 	public void sendAppointmentReminders() {
 		log.info("Starting appointment reminder task.");
-		
+
 		try {
 			// Get appointments for day after tomorrow to give adequate notice
-			LocalDate targetDate = LocalDate.now(ZoneId.of("UTC")).plusDays(2);
+			LocalDate targetDate = LocalDate.now(ZoneId.of("UTC")).plusDays(4);
 			List<ApplicationEntity> applications = applicationRepository.findByAppointmentDate(targetDate);
 
-			if (applications == null || applications.isEmpty()) {
+		if (applications == null || applications.isEmpty()) {
 				log.info("No appointments found for date: {}", targetDate);
-				return;
-			}
+			return;
+		}
 
 			log.info("Found {} appointments for date: {}", applications.size(), targetDate);
 
-			for (ApplicationEntity application : applications) {
-				try {
-					log.info("Processing appointment reminder for Prid: {}", application.getApplicationId());
-					processSingleReminder(application);
-				} catch (Exception e) {
+		for (ApplicationEntity application : applications) {
+			try {
+				log.info("Processing appointment reminder for Prid: {}", application.getApplicationId());
+				processSingleReminder(application);
+			} catch (Exception e) {
 					log.error("Failed to send notification for pre-registration ID: {}", 
 							 application.getApplicationId(), e);
 					// Continue processing other applications
-				}
 			}
+		}
 		} catch (Exception e) {
 			log.error("Error in appointment reminder task", e);
 		} finally {
-			log.info("Appointment reminder task completed.");
+		log.info("Appointment reminder task completed.");
 		}
 	}
 
@@ -262,7 +264,7 @@ public class NotificationService {
 		// Get demographic data
 		MainResponseDTO<DemographicResponseDTO> demographicResponse = 
 			demographicServiceIntf.getDemographicData(application.getApplicationId());
-		
+
 		if (demographicResponse == null || demographicResponse.getResponse() == null) {
 			log.error("No demographic data found for PreRegID: {}", application.getApplicationId());
 			return;
@@ -359,7 +361,7 @@ public class NotificationService {
 				JsonNode nameArray = identityNode.get(fullName);
 				if (nameArray.isArray() && nameArray.size() > 0) {
 					for (JsonNode nameNode : nameArray) {
-						if (nameNode.has("language") && nameNode.has("value")) {
+				if (nameNode.has("language") && nameNode.has("value")) {
 							String nameLangCode = nameNode.get("language").asText();
 							String nameValue = nameNode.get("value").asText();
 							
@@ -554,366 +556,179 @@ public class NotificationService {
 	 * Modified sendNotification method to handle reminders better
 	 */
 	public MainResponseDTO<NotificationResponseDTO> sendNotification(
-			String jsonString, String langCode, MultipartFile file, boolean isReminder) {
-		
+			String jsonString, String langCode, MultipartFile file, boolean isLatest) {
+
 		response = new MainResponseDTO<>();
 		NotificationResponseDTO notificationResponse = new NotificationResponseDTO();
+		log.info("In notification service of sendNotification with request {} and langCode {}", 
+				jsonString, langCode);
+		
+		requiredRequestMap.put("id", notificationServiceId);
+		response.setId(notificationServiceId);
+		response.setVersion(version);
+		boolean isSuccess = false;
 		
 		try {
-			// Parse the request using JsonNode first to avoid deserialization issues
-			JsonNode rootNode = objectMapper.readTree(jsonString);
-			JsonNode requestNode = rootNode.get("request");
+			MainRequestDTO<NotificationDTO> notificationReqDTO = serviceUtil.createNotificationDetails(jsonString,
+					langCode, isLatest);
+			response.setId(notificationReqDTO.getId());
+			response.setVersion(notificationReqDTO.getVersion());
+			NotificationDTO notificationDto = notificationReqDTO.getRequest();
 			
-			if (requestNode == null) {
-				throw new InvalidRequestParameterException(
-					Collections.singletonList(new ExceptionJSONInfoDTO(
-						"INVALID_REQUEST", "Request node is missing")), 
-					response);
-			}
+			if (validationUtil.requestValidator(validationUtil.prepareRequestMap(notificationReqDTO),
+					requiredRequestMap)) {
 
-			NotificationDTO notificationDto;
-			if (isReminder) {
-				// For reminders, create DTO directly from the request node
-				notificationDto = new NotificationDTO();
+				MainResponseDTO<DemographicResponseDTO> demoDetail = notificationDtoValidation(notificationDto);
 				
-				// Extract and validate required fields
-				String preRegId = getNodeTextValue(requestNode, "preRegistrationId");
-				String appointmentDate = getNodeTextValue(requestNode, "appointmentDate");
-				String appointmentTime = getNodeTextValue(requestNode, "appointmentTime");
-				String name = getNodeTextValue(requestNode, "name");
+				// Create template values map
+				Map<String, Object> templateValues = new HashMap<>();
+				templateValues.put("name", notificationDto.getName());
+				templateValues.put("preRegistrationId", notificationDto.getPreRegistrationId());
+				templateValues.put("appointmentDate", notificationDto.getAppointmentDate());
+				templateValues.put("appointmentTime", notificationDto.getAppointmentTime());
 				
-				// if (preRegId == null || appointmentDate == null || 
-				// 	appointmentTime == null || name == null) {
-				// 	throw new MandatoryFieldException(
-				// 		NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				// 		"Missing required fields in reminder notification",
-				// 		response);
-				// }
-				
-				notificationDto.setPreRegistrationId(preRegId);
-				notificationDto.setAppointmentDate(appointmentDate);
-				notificationDto.setAppointmentTime(appointmentTime);
-				notificationDto.setName(name);
-				
-				// Set contact information
-				String emailID = getNodeTextValue(requestNode, "emailID");
-				String mobNum = getNodeTextValue(requestNode, "mobNum");
-				
-				if (emailID != null) {
-					notificationDto.setEmailID(emailID.trim());
+				if (notificationDto.getRegistrationCenterName() != null && !notificationDto.getRegistrationCenterName().isEmpty()) {
+					templateValues.put("registrationCenterName", notificationDto.getRegistrationCenterName().get(0).getValue());
 				}
-				if (mobNum != null) {
-					notificationDto.setMobNum(mobNum.trim());
+				if (notificationDto.getAddress() != null && !notificationDto.getAddress().isEmpty()) {
+					templateValues.put("address", notificationDto.getAddress().get(0).getValue());
 				}
+
+				// Create dummy request for notification service
+				MainRequestDTO<OtpRequestDTO> dummyRequest = new MainRequestDTO<>();
+				OtpRequestDTO otpRequest = new OtpRequestDTO();
+				otpRequest.setUserId(notificationDto.getPreRegistrationId());
+				dummyRequest.setRequest(otpRequest);
 				
-				// Set language code
-				String languageCode = getNodeTextValue(requestNode, "languageCode");
-				notificationDto.setLanguageCode(languageCode != null ? 
-											 languageCode : defaultLanguage);
-				
-				notificationDto.setIsBatch(true);
-				notificationDto.setAdditionalRecipient(false);
-				
-				// Initialize center details
-				List<KeyValuePairDto<String, String>> centerName = new ArrayList<>();
-				String centerNameValue = getNodeTextValue(requestNode, "registrationCenterName");
-				if (centerNameValue != null && !centerNameValue.trim().isEmpty()) {
-					KeyValuePairDto<String, String> centerNamePair = new KeyValuePairDto<>();
-					centerNamePair.setKey(notificationDto.getLanguageCode());
-					centerNamePair.setValue(centerNameValue.trim());
-					centerName.add(centerNamePair);
-				}
-				notificationDto.setRegistrationCenterName(centerName);
-				
-				List<KeyValuePairDto<String, String>> address = new ArrayList<>();
-				String addressValue = getNodeTextValue(requestNode, "address");
-				if (addressValue != null && !addressValue.trim().isEmpty()) {
-					KeyValuePairDto<String, String> addressPair = new KeyValuePairDto<>();
-					addressPair.setKey(notificationDto.getLanguageCode());
-					addressPair.setValue(addressValue.trim());
-					address.add(addressPair);
-				}
-				notificationDto.setAddress(address);
-				
-			} else {
-				MainRequestDTO<NotificationDTO> notificationReqDTO = 
-					serviceUtil.createNotificationDetails(jsonString, langCode, false);
-				notificationDto = notificationReqDTO.getRequest();
-			}
-
-			// Validate mandatory fields
-			// validateNotificationDto(notificationDto);
-
-			response.setId(rootNode.get("id").asText());
-			response.setVersion(rootNode.get("version").asText());
-
-			// Send notifications based on available contact information
-			boolean notificationSent = false;
-			List<String> failedNotifications = new ArrayList<>();
-			
-			if (notificationDto.getEmailID() != null && 
-				validationUtil.emailValidator(notificationDto.getEmailID())) {
-				try {
-					log.info("Attempting to send email notification - PreRegID: {}, Email: {}, Name: {}", 
-							notificationDto.getPreRegistrationId(),
-							notificationDto.getEmailID(),
-							notificationDto.getName());
-
-					// Validate email template
-//					if (notificationDto.getTemplates() == null ||
-//						notificationDto.getTemplates().stream()
-//							.noneMatch(t -> t.getKey().endsWith("_email"))) {
-//						log.error("Missing email template for PreRegID: {}",
-//								 notificationDto.getPreRegistrationId());
-//						throw new MandatoryFieldException(
-//							NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-//							"Missing email template",
-//							response);
-//					}
-
-					notificationUtil.notify(NotificationRequestCodes.EMAIL.getCode(), 
-										 notificationDto, file);
-					notificationSent = true;
-					log.info("Email notification sent successfully to: {}", 
-							notificationDto.getEmailID());
-				} catch (NullPointerException e) {
-					log.error("NullPointerException while sending email - PreRegID: {}", 
-							 notificationDto.getPreRegistrationId(), e);
-					failedNotifications.add("email");
-				}
-			}
-			
-			if (notificationDto.getMobNum() != null && 
-				validationUtil.phoneValidator(notificationDto.getMobNum())) {
-				try {
-					log.info("Attempting to send SMS notification - PreRegID: {}, Mobile: {}, Name: {}", 
-							notificationDto.getPreRegistrationId(),
-							notificationDto.getMobNum(),
-							notificationDto.getName());
-
-//					// Validate SMS template
-//					if (notificationDto.getTemplates() == null ||
-//						notificationDto.getTemplates().stream()
-//							.noneMatch(t -> t.getKey().endsWith("_sms"))) {
-//						log.error("Missing SMS template for PreRegID: {}",
-//								 notificationDto.getPreRegistrationId());
-//						throw new MandatoryFieldException(
-//							NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-//							"Missing SMS template",
-//							response);
-//					}
-
-					notificationUtil.notify(NotificationRequestCodes.SMS.getCode(), 
-										 notificationDto, file);
-					notificationSent = true;
-					log.info("SMS notification sent successfully to: {}", 
-							notificationDto.getMobNum());
-				} catch (NullPointerException e) {
-					log.error("NullPointerException while sending SMS - PreRegID: {}", 
-							 notificationDto.getPreRegistrationId(), e);
-					failedNotifications.add("SMS");
-				}
-			}
-
-			if (!notificationSent) {
-				if (failedNotifications.isEmpty()) {
-					log.warn("No valid contact information found for ID: {}", 
-							notificationDto.getPreRegistrationId());
+				if (notificationDto.isAdditionalRecipient()) {
+					processAdditionalRecipientNotification(notificationDto, templateValues, dummyRequest, file);
 				} else {
-					log.error("All notification attempts failed for ID: {}. Failed types: {}", 
-							 notificationDto.getPreRegistrationId(), 
-							 String.join(", ", failedNotifications));
+					processRegularNotification(demoDetail, notificationDto, templateValues, dummyRequest, file);
 				}
-			}
-
-			notificationResponse.setMessage(NotificationRequestCodes.MESSAGE.getCode());
+				
+				notificationResponse.setMessage(NotificationRequestCodes.MESSAGE.getCode());
 			response.setResponse(notificationResponse);
+			isSuccess = true;
+			}
 			
 		} catch (Exception ex) {
 			log.error("Error in sendNotification", ex);
 			new NotificationExceptionCatcher().handle(ex, response);
 		} finally {
 			response.setResponsetime(validationUtil.getCurrentResponseTime());
-		}
+				if (isSuccess) {
+					setAuditValues(EventId.PRE_411.toString(), EventName.NOTIFICATION.toString(),
+							EventType.SYSTEM.toString(),
+						"Pre-Registration data is successfully trigger notification to the user",
+						AuditLogVariables.NO_ID.toString(), authUserDetails().getUserId(),
+						authUserDetails().getUsername());
+				} else {
+				setAuditValues(EventId.PRE_405.toString(), EventName.EXCEPTION.toString(), 
+						EventType.SYSTEM.toString(),
+							"Failed to trigger notification to the user", AuditLogVariables.NO_ID.toString(),
+						authUserDetails().getUserId(), authUserDetails().getUsername());
+				}
+			}
 		
 		return response;
 	}
 
-	private String getNodeTextValue(JsonNode node, String fieldName) {
-		return node.has(fieldName) && !node.get(fieldName).isNull() ? 
-			   node.get(fieldName).asText() : null;
+	private void processAdditionalRecipientNotification(NotificationDTO notificationDto, 
+			Map<String, Object> templateValues, MainRequestDTO<OtpRequestDTO> dummyRequest, 
+			MultipartFile file) throws Exception {
+		
+		if (notificationDto.getMobNum() != null && !notificationDto.getMobNum().isEmpty()) {
+			if (validationUtil.phoneValidator(notificationDto.getMobNum())) {
+				serviceUtil.invokeSmsNotification(templateValues, notificationDto.getMobNum(), 
+						dummyRequest, notificationDto.getLanguageCode(), 
+						notificationDto.getIsBatch() ? NotificationType.REMINDER : NotificationType.BOOKING);
+			} else {
+				throw new MandatoryFieldException(NotificationErrorCodes.PRG_PAM_ACK_007.getCode(),
+						NotificationErrorMessages.PHONE_VALIDATION_EXCEPTION.getMessage(), response);
+			}
+		}
+		
+		if (notificationDto.getEmailID() != null && !notificationDto.getEmailID().isEmpty()) {
+			if (validationUtil.emailValidator(notificationDto.getEmailID())) {
+				serviceUtil.invokeEmailNotification(templateValues, notificationDto.getEmailID(), 
+						dummyRequest, notificationDto.getLanguageCode(), 
+						notificationDto.getIsBatch() ? NotificationType.REMINDER : NotificationType.BOOKING);
+			} else {
+				throw new MandatoryFieldException(NotificationErrorCodes.PRG_PAM_ACK_006.getCode(),
+						NotificationErrorMessages.EMAIL_VALIDATION_EXCEPTION.getMessage(), response);
+			}
+		}
+		
+		if ((notificationDto.getEmailID() == null || notificationDto.getEmailID().isEmpty()
+				|| !validationUtil.emailValidator(notificationDto.getEmailID()))
+				&& (notificationDto.getMobNum() == null || notificationDto.getMobNum().isEmpty()
+						|| !validationUtil.phoneValidator(notificationDto.getMobNum()))) {
+			throw new MandatoryFieldException(NotificationErrorCodes.PRG_PAM_ACK_001.getCode(),
+					NotificationErrorMessages.MOBILE_NUMBER_OR_EMAIL_ADDRESS_NOT_FILLED.getMessage(),
+					response);
+		}
 	}
 
-	// private void validateNotificationDto(NotificationDTO dto) {
-	// 	List<String> missingFields = new ArrayList<>();
-	// 	List<String> invalidFields = new ArrayList<>();
+	private void processRegularNotification(MainResponseDTO<DemographicResponseDTO> demoDetail,
+			NotificationDTO notificationDto, Map<String, Object> templateValues,
+			MainRequestDTO<OtpRequestDTO> dummyRequest, MultipartFile file) throws Exception {
 		
-	// 	// Check required fields
-	// 	if (dto.getPreRegistrationId() == null || dto.getPreRegistrationId().trim().isEmpty()) {
-	// 		missingFields.add("preRegistrationId");
-	// 	}
-	// 	if (dto.getAppointmentDate() == null || dto.getAppointmentDate().trim().isEmpty()) {
-	// 		missingFields.add("appointmentDate");
-	// 	}
-	// 	if (dto.getAppointmentTime() == null || dto.getAppointmentTime().trim().isEmpty()) {
-	// 		missingFields.add("appointmentTime");
-	// 	}
-	// 	if (dto.getName() == null || dto.getName().trim().isEmpty()) {
-	// 		missingFields.add("name");
-	// 	}
+		JsonNode responseNode = objectMapper.readTree(
+				demoDetail.getResponse().getDemographicDetails().toJSONString())
+				.get(identity);
 		
-	// 	// Validate contact information
-	// 	boolean hasValidContact = false;
-	// 	if (dto.getEmailID() != null && !dto.getEmailID().trim().isEmpty()) {
-	// 		if (!validationUtil.emailValidator(dto.getEmailID().trim())) {
-	// 			invalidFields.add("emailID (invalid format)");
-	// 		} else {
-	// 			hasValidContact = true;
-	// 		}
-	// 	}
+		if (responseNode.has(email)) {
+				String emailId = responseNode.get(email).asText();
+			if (validationUtil.emailValidator(emailId)) {
+				log.info("Sending email notification to: {}", emailId);
+				serviceUtil.invokeEmailNotification(templateValues, emailId, 
+						dummyRequest, notificationDto.getLanguageCode(), 
+						notificationDto.getIsBatch() ? NotificationType.REMINDER : NotificationType.BOOKING);
+			}
+		}
 		
-	// 	if (dto.getMobNum() != null && !dto.getMobNum().trim().isEmpty()) {
-	// 		if (!validationUtil.phoneValidator(dto.getMobNum().trim())) {
-	// 			invalidFields.add("mobNum (invalid format)");
-	// 		} else {
-	// 			hasValidContact = true;
-	// 		}
-	// 	}
+		if (responseNode.has(phone)) {
+			String phoneNumber = responseNode.get(phone).asText();
+			if (validationUtil.phoneValidator(phoneNumber)) {
+				log.info("Sending SMS notification to: {}", phoneNumber);
+				serviceUtil.invokeSmsNotification(templateValues, phoneNumber, 
+						dummyRequest, notificationDto.getLanguageCode(), 
+						notificationDto.getIsBatch() ? NotificationType.REMINDER : NotificationType.BOOKING);
+			}
+		}
 		
-	// 	if (!hasValidContact) {
-	// 		missingFields.add("contact information (either email or mobile number)");
-	// 	}
-		
-	// 	// Throw exception if any validation fails
-	// 	if (!missingFields.isEmpty() || !invalidFields.isEmpty()) {
-	// 		StringBuilder errorMsg = new StringBuilder();
-	// 		//if (!missingFields.isEmpty()) {
-	// 		//	errorMsg.append("Missing mandatory fields: ")
-	// 		//		   .append(String.join(", ", missingFields));
-	// 		//}
-	// 		if (!invalidFields.isEmpty()) {
-	// 			if (errorMsg.length() > 0) errorMsg.append("; ");
-	// 			errorMsg.append("Invalid fields: ")
-	// 				   .append(String.join(", ", invalidFields));
-	// 		}
-			
-	// 		throw new MandatoryFieldException(
-	// 			NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-	// 			errorMsg.toString(),
-	// 			response);
-	// 	}
-	// }
-
-	private List<ExceptionJSONInfoDTO> convertServiceErrors(Exception ex) {
-		List<ExceptionJSONInfoDTO> errors = new ArrayList<>();
-		ExceptionJSONInfoDTO error = new ExceptionJSONInfoDTO();
-		error.setErrorCode("NOTIFICATION_ERROR"); //  set an appropriate error code
-		error.setMessage(ex.getMessage()); //  set the exception message
-		errors.add(error);
-		return errors;
+		if (!responseNode.has(email) && !responseNode.has(phone)) {
+			log.warn("No contact information found for PreRegID: {}", 
+					notificationDto.getPreRegistrationId());
+		}
 	}
 
-	private Map<String, Object> buildNotificationRequest(NotificationDTO notificationDto) {
-		// Validate input
-		if (notificationDto == null) {
-			throw new InvalidRequestParameterException(
-				Collections.singletonList(new ExceptionJSONInfoDTO(
-					"INVALID_REQUEST", "NotificationDTO is null")), 
-				response);
+	private void logAuditEvent(boolean isSuccess) {
+		if (isSuccess) {
+			setAuditValues(EventId.PRE_411.toString(), EventName.NOTIFICATION.toString(),
+					EventType.SYSTEM.toString(),
+					"Pre-Registration data is successfully trigger notification to the user",
+					AuditLogVariables.NO_ID.toString(), authUserDetails().getUserId(),
+					authUserDetails().getUsername());
+					} else {
+			setAuditValues(EventId.PRE_405.toString(), EventName.EXCEPTION.toString(), 
+					EventType.SYSTEM.toString(),
+					"Failed to trigger notification to the user", AuditLogVariables.NO_ID.toString(),
+					authUserDetails().getUserId(), authUserDetails().getUsername());
 		}
-
-		Map<String, Object> innerRequest = new HashMap<>();
-		
-		// Required fields - validate and set
-		if (notificationDto.getPreRegistrationId() == null || notificationDto.getPreRegistrationId().trim().isEmpty()) {
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				"PreRegistrationId is mandatory",
-				response);
-		}
-		innerRequest.put("preRegistrationId", notificationDto.getPreRegistrationId());
-
-		if (notificationDto.getAppointmentDate() == null || notificationDto.getAppointmentDate().trim().isEmpty()) {
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				"AppointmentDate is mandatory",
-				response);
-		}
-		innerRequest.put("appointmentDate", notificationDto.getAppointmentDate());
-
-		if (notificationDto.getAppointmentTime() == null || notificationDto.getAppointmentTime().trim().isEmpty()) {
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				"AppointmentTime is mandatory",
-				response);
-		}
-		innerRequest.put("appointmentTime", notificationDto.getAppointmentTime());
-
-		// Contact information - at least one should be present
-		String mobNum = notificationDto.getMobNum();
-		String emailID = notificationDto.getEmailID();
-		
-		if ((mobNum == null || mobNum.trim().isEmpty()) && 
-			(emailID == null || emailID.trim().isEmpty())) {
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				"At least one contact method (mobile or email) is required",
-				response);
-		}
-		
-		innerRequest.put("mobNum", mobNum != null ? mobNum.trim() : "");
-		innerRequest.put("emailID", emailID != null ? emailID.trim() : "");
-
-		// Name validation
-		if (notificationDto.getName() == null || notificationDto.getName().trim().isEmpty()) {
-			throw new MandatoryFieldException(
-				NotificationErrorCodes.PRG_PAM_ACK_002.getCode(),
-				"Name is mandatory",
-				response);
-		}
-		innerRequest.put("name", notificationDto.getName().trim());
-
-		// Language code validation
-		String langCode = notificationDto.getLanguageCode();
-		if (langCode == null || langCode.trim().isEmpty()) {
-			langCode = defaultLanguage;
-			log.info("Using default language code: {} for preRegistrationId: {}", 
-					defaultLanguage, notificationDto.getPreRegistrationId());
-		}
-		innerRequest.put("languageCode", langCode);
-		innerRequest.put("langCode", langCode);
-
-		// Batch and recipient flags
-		innerRequest.put("isBatch", notificationDto.getIsBatch() != null ? 
-								   notificationDto.getIsBatch() : false);
-		innerRequest.put("additionalRecipient", notificationDto.isAdditionalRecipient());
-
-		// Center details - ensure they're not null
-		List<KeyValuePairDto<String, String>> centerName = notificationDto.getRegistrationCenterName();
-		List<KeyValuePairDto<String, String>> address = notificationDto.getAddress();
-		
-		innerRequest.put("registrationCenterName", 
-			centerName != null && !centerName.isEmpty() ? centerName.get(0).getValue() : "");
-		innerRequest.put("address", 
-			address != null && !address.isEmpty() ? address.get(0).getValue() : "");
-
-		// Build outer request
-		Map<String, Object> outerRequest = new HashMap<>();
-		outerRequest.put("id", notificationServiceId);
-		outerRequest.put("version", version);
-		outerRequest.put("requesttime", DateTimeFormatter.ofPattern(mosipDateTimeFormat)
-			.format(LocalDateTime.now(ZoneId.of("UTC"))));
-		outerRequest.put("request", innerRequest);
-
-		return outerRequest;
 	}
 
-	public MainResponseDTO<DemographicResponseDTO> notificationDtoValidation(NotificationDTO dto)
+	private void setAuditValues(String eventId, String eventName, String eventType, String description,
+			String idType, String id, String username) {
+		auditLogUtil.logAuditEvent(eventId, eventName, eventType, description, idType, id, username);
+	}
+
+	public MainResponseDTO<DemographicResponseDTO> notificationDtoValidation(NotificationDTO notificationDto)
 			throws IOException, ParseException {
-		MainResponseDTO<DemographicResponseDTO> demoDetail = getDemographicDetails(dto);
-		if (!dto.getIsBatch()) {
+		MainResponseDTO<DemographicResponseDTO> demoDetail = getDemographicDetails(notificationDto);
+		if (!notificationDto.getIsBatch()) {
 			//Validate booking details and modify the center details
-			validateBookingDetails(dto);
+			validateBookingDetails(notificationDto);
 		}
 		return demoDetail;
 	}
