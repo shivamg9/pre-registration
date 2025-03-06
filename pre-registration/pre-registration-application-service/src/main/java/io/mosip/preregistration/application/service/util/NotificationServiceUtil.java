@@ -459,94 +459,96 @@ public class NotificationServiceUtil {
 	 * @throws IdAuthenticationBusinessException the id authentication business
 	 *                                           exception
 	 */
-	public String fetchTemplate(String templateName, String langCode) throws PreRegLoginException {
-		log.info("In fetchTemplate of NotificationServiceUtil for templateName {} and langCode {}", templateName, langCode);
-		
-		if (templateName == null || langCode == null) {
+	public String fetchTemplate(String templateName, String langCodes) throws PreRegLoginException {
+		log.info("In fetchTemplate of NotificationServiceUtil for templateName {} and langCodes {}", templateName, langCodes);
+
+
+		if (templateName == null || langCodes == null) {
 			throw new PreRegLoginException(
 				PreRegLoginErrorConstants.DATA_VALIDATION_FAILED.getErrorCode(),
 				"Template name and language code cannot be null");
 		}
 
-		Map<String, String> params = new HashMap<>();
-		params.put(LANG_CODE, langCode);
-		params.put(TEMPLATE_TYPE_CODE, templateName);
+		// Split the comma-separated string into individual language codes
+		String[] langCodeArray = langCodes.split(",");
+		String templateContent = "";
 
-		HttpHeaders headers1 = new HttpHeaders();
-		headers1.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-		HttpEntity<?> entity1 = new HttpEntity<>(headers1);
+		for (String langCode : langCodeArray) {
+			langCode = langCode.trim(); // Remove leading/trailing whitespace
 
-		String url = UriComponentsBuilder
-				.fromUriString(environment.getProperty("id-masterdata-template-service-multilang.rest.uri"))
-				.buildAndExpand(params)
-				.toString();
+			Map<String, String> params = new HashMap<>();
+			params.put(LANG_CODE, langCode); // Single language code
+			params.put(TEMPLATE_TYPE_CODE, templateName);
 
-		try {
-			log.debug("Calling template service with URL: {}", url);
-			
-			ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
-				url, 
-				HttpMethod.GET, 
-				entity1, 
-				new ParameterizedTypeReference<Map<String, Object>>() {}
-			);
+			HttpHeaders headers = new HttpHeaders(); // Create headers inside the loop if needed
+			headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			HttpEntity<?> entity = new HttpEntity<>(headers);
 
-			Map<String, Object> response = responseEntity.getBody();
-			if (response == null) {
-				log.error("Received null response from template service for template: {}", templateName);
-				return "";
-			}
+			String url = UriComponentsBuilder
+					.fromUriString(environment.getProperty("id-masterdata-template-service-multilang.rest.uri"))
+					.buildAndExpand(params)
+					.toString();
 
-			@SuppressWarnings("unchecked")
-			Map<String, List<Map<String, Object>>> fetchResponse = 
-				(Map<String, List<Map<String, Object>>>) response.get("response");
-			
-			if (fetchResponse == null) {
-				log.error("No response data found in template service response for template: {}", templateName);
-				return "";
-			}
+			try {
+				log.debug("Calling template service with URL: {}", url);
 
-			List<Map<String, Object>> masterDataList = fetchResponse.get("templates");
-			if (masterDataList == null || masterDataList.isEmpty()) {
-				log.error("No templates found for template name: {} and language: {}", templateName, langCode);
-				return "";
-			}
+				ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
+						url,
+						HttpMethod.GET,
+						entity,
+						new ParameterizedTypeReference<Map<String, Object>>() {}
+				);
 
-			Map<String, Map<String, String>> masterDataMap = new HashMap<>();
-			
-			for (Map<String, Object> map : masterDataList) {
-				String lang = Objects.toString(map.get("langCode"), "");
-				if (!params.containsKey("langCode") || 
-					(params.containsKey("langCode") && lang.contentEquals(params.get("langCode")))) {
-					
-					String key = Objects.toString(map.get("templateTypeCode"), "");
-					String value = Objects.toString(map.get("fileText"), "");
-					Object isActiveObj = map.get(IS_ACTIVE);
-					
-					if (isActiveObj instanceof Boolean && (Boolean) isActiveObj) {
-						Map<String, String> valueMap = masterDataMap.computeIfAbsent(lang,
-								k -> new LinkedHashMap<>());
-						valueMap.put(key, value);
+				Map<String, Object> response = responseEntity.getBody();
+				if (response == null) {
+					log.warn("Received null response from template service for template: {} and language: {}", templateName, langCode);
+					continue; // Skip to the next language
+				}
+
+				@SuppressWarnings("unchecked")
+				Map<String, List<Map<String, Object>>> fetchResponse =
+						(Map<String, List<Map<String, Object>>>) response.get("response");
+
+				if (fetchResponse == null) {
+					log.warn("No response data found in template service response for template: {} and language: {}", templateName, langCode);
+					continue;
+				}
+
+				List<Map<String, Object>> masterDataList = fetchResponse.get("templates");
+				if (masterDataList == null || masterDataList.isEmpty()) {
+					log.warn("No templates found for template name: {} and language: {}", templateName, langCode);
+					continue;
+				}
+
+				//Simplified logic, since we're fetching one language at a time.
+				for (Map<String, Object> templateData : masterDataList) {
+					String lang = Objects.toString(templateData.get("langCode"), "");
+					String fileText = Objects.toString(templateData.get("fileText"), "");
+					Object isActiveObj = templateData.get(IS_ACTIVE);
+
+					if (lang.equals(langCode) && isActiveObj instanceof Boolean && (Boolean) isActiveObj) {
+						templateContent = fileText; // Found the template for this language.
+						break; // Exit inner loop - we found what we needed for THIS language.
 					}
 				}
-			}
+				if(!templateContent.isEmpty()){ //if any template content is present return
+					break; //exit outer loop, when any one language template is found
+				}
 
-			String template = Optional.ofNullable(masterDataMap.get(params.get(LANG_CODE)))
-					.map(map -> map.get(templateName))
-					.orElse("");
-					
-			if (template.isEmpty()) {
-				log.warn("No template content found for template: {} and language: {}", templateName, langCode);
+			} catch (Exception e) {
+				log.error("Error fetching template {} for language {}: {}", templateName, langCode, e.getMessage());
+				// DON'T throw an exception here.  Try the next language.
 			}
-			
-			return template;
-
-		} catch (Exception e) {
-			log.error("Error fetching template {} for language {}: {}", templateName, langCode, e.getMessage());
-			throw new PreRegLoginException(
-				PreRegLoginErrorConstants.DATA_VALIDATION_FAILED.getErrorCode(),
-				"Error fetching template: " + e.getMessage());
 		}
+
+		if (templateContent.isEmpty()) {
+			log.warn("No template content found for template: {} and languages: {}", templateName, langCodes);
+			throw new PreRegLoginException( // NOW throw the exception if no templates were found
+					PreRegLoginErrorConstants.DATA_VALIDATION_FAILED.getErrorCode(),
+					String.format("Template not found for type %s and languages %s", templateName, langCodes));
+		}
+
+		return templateContent;
 	}
 
 	@SuppressWarnings("null")
@@ -728,3 +730,4 @@ public class NotificationServiceUtil {
 	}
 
 }
+
