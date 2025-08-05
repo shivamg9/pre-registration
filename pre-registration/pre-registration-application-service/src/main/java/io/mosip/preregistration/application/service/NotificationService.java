@@ -877,7 +877,7 @@ public class NotificationService {
 		log.info("sessionId", "idType", "id", "In getAppointmentDetailsRestService method of notification service ");
 
 		BookingRegistrationDTO bookingRegistrationDTO = null;
-		MainResponseDTO<BookingRegistrationDTO> respEntity = notificationUtil.getAppointmentDetails(preId);
+		MainResponseDTO<BookingRegistrationDTO> respEntity = appointmentService.getAppointmentDetails(preId);
 		if (respEntity.getErrors() != null) {
 			throw new BookingDetailsNotFoundException(respEntity.getErrors(), response);
 		}
