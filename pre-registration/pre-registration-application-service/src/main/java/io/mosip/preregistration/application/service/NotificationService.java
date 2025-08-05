@@ -89,6 +89,8 @@ public class NotificationService {
 	@Autowired
 	private NotificationUtil notificationUtil;
 
+	@Autowired
+	private AppointmentService appointmentService;
 
 	/**
 	 * The reference to {@link NotificationServiceUtil}.
