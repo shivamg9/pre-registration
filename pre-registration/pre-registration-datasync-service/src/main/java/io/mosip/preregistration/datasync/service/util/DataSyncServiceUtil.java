@@ -176,6 +176,22 @@ public class DataSyncServiceUtil {
 	@Value("${pod.url}")
 	private String podUrl;
 
+    /**
+     * Reference for ${doc.url} from property file
+     */
+
+    @Value("${nrcf.url}")
+    private String nrcfUrl;
+
+    @Value("${nrcb.url}")
+    private String nrcbUrl;
+
+    @Value("${hhdf.url}")
+    private String hhdfUrl;
+
+    @Value("${hhdb.url}")
+    private String hhdbUrl;
+
 	/**
 	 * Reference for ${booking.resource.url} from property file
 	 */
@@ -619,7 +635,15 @@ public class DataSyncServiceUtil {
 				} else if (documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.POD.getCode())
 						|| documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.POB.getCode())) {
 					jsonObject.put(podUrl, prepareDocumentMetaData(documentMultipartResponseDTO));
-				}
+				} else if (documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.NRCF.getCode())) {
+                    jsonObject.put(nrcfUrl, prepareDocumentMetaData(documentMultipartResponseDTO));
+                } else if (documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.NRCB.getCode())) {
+                    jsonObject.put(nrcbUrl, prepareDocumentMetaData(documentMultipartResponseDTO));
+                } else if (documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.HHDF.getCode())) {
+                    jsonObject.put(hhdfUrl, prepareDocumentMetaData(documentMultipartResponseDTO));
+                } else if (documentMultipartResponseDTO.getDocCatCode().equals(RequestCodes.HHDB.getCode())) {
+                    jsonObject.put(hhdbUrl, prepareDocumentMetaData(documentMultipartResponseDTO));
+                }
 				DocumentDTO documentDTO = getDocBytesDetails(documentMultipartResponseDTO.getDocumentId(), preId);
 				if (documentDTO != null && documentDTO.getDocument() != null) {
 					inputFile.put(documentMultipartResponseDTO.getDocCatCode().concat("_")

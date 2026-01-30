@@ -21,4 +21,16 @@ public class DocumentIdentity {
 	/** Proof of Relation. */
 	private IdentityJsonValues por;
 
+    /** NRC Card Front. */
+    private IdentityJsonValues nrcf;
+
+    /** NRC Card Back. */
+    private IdentityJsonValues nrcb;
+
+    /** HouseHold Front. */
+    private IdentityJsonValues hhdf;
+
+    /** HouseHold Back. */
+    private IdentityJsonValues hhdb;
+
 }
