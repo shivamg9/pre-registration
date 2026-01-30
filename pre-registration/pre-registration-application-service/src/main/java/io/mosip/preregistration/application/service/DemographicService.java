@@ -330,13 +330,41 @@ public class DemographicService implements DemographicServiceIntf {
 
 			log.info("sessionId", "idType", "id",
 					"JSON validator end time : " + DateUtils.getUTCCurrentDateTimeString());
-			log.info("sessionId", "idType", "id",
-					"Pre ID generation start time : " + DateUtils.getUTCCurrentDateTimeString());
-			String preId = serviceUtil.generateId();
-			log.info("sessionId", "idType", "id",
-					"Pre ID generation end time : " + DateUtils.getUTCCurrentDateTimeString());
+            log.info("sessionId", "idType", "id",
+                    "Pre ID generation start time : " + DateUtils.getUTCCurrentDateTimeString());
 
-			DemographicEntity demographicEntity = demographicRepository
+            String preId = null;
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> identityObject = (Map<String, Object>) constructedObject.get("identity");
+
+            if (identityObject != null) {
+
+                String nrcCode = extractLangValue( identityObject, "nrcCode");
+                String cityCode = extractLangValue( identityObject, "cityCode");
+                String residenceStatus = extractLangValue( identityObject, "residenceStatus");
+                String nrcNumberPart = identityObject.get("nrcNumberPart") != null
+                        ? identityObject.get("nrcNumberPart").toString().trim()
+                        : null;
+
+                Object nrcObj = identityObject.get("nrcNumber");
+                if (nrcObj != null && !nrcObj.toString().trim().isEmpty()) {
+
+                    preId = nrcCode + cityCode + residenceStatus + nrcNumberPart;
+                    log.info("Using NRC components as PreRegistrationId: {}", preId);
+                }
+            }
+
+            // fallback to old logic
+            if (preId == null) {
+                preId = serviceUtil.generateId();
+                log.info("NRC components not found. Generated PreRegistrationId: {}", preId);
+            }
+
+            log.info("sessionId", "idType", "id",
+                    "Pre ID generation end time : " + DateUtils.getUTCCurrentDateTimeString());
+
+            DemographicEntity demographicEntity = demographicRepository
 					.save(serviceUtil.prepareDemographicEntityForCreate(demographicRequest,
 							StatusCodes.APPLICATION_INCOMPLETE.getCode(), authUserDetails().getUserId(), preId));
 			DemographicCreateResponseDTO res = serviceUtil.setterForCreatePreRegistration(demographicEntity,
@@ -376,8 +404,29 @@ public class DemographicService implements DemographicServiceIntf {
 
 	}
 
-	
-	/*
+    @SuppressWarnings("unchecked")
+    private String extractLangValue(Map<String, Object> identity, String key) {
+        Object obj = identity.get(key);
+        if (obj instanceof List) {
+            List<Map<String, Object>> list = (List<Map<String, Object>>) obj;
+            for (Map<String, Object> entry : list) {
+                Object val = entry.get("value");
+                if (val != null && !val.toString().trim().isEmpty()) {
+                    return val.toString().trim();
+                }
+            }
+        }
+        return null;
+    }
+
+
+    private boolean isNotBlank(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+
+
+    /*
 	 * This method is used to update the demographic data by PreId
 	 * 
 	 * @see

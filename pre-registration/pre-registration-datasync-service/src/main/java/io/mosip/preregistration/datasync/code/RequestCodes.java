@@ -22,8 +22,12 @@ public enum RequestCodes {
 	POI("POI"),
 	POR("POR"),
 	POD("POD"),
-	POB("POB");
-	
+	POB("POB"),
+    NRCF("NRCF"),
+    NRCB("NRCB"),
+    HHDF("HHDF"),
+    HHDB("HHDB");
+
 	/**
 	 * @param code
 	 */
